@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login — Redo & Renew by Charline</title>
+  <meta name="description" content="Admin login for Redo & Renew by Charline." />
+  <meta name="robots" content="noindex" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="icon" type="image/jpeg" href="assets/img/logo.jpg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <main class="admin-login">
+    <div class="admin-login__card">
+      <img src="assets/img/logo.jpg" alt="Redo & Renew logo" class="admin-login__logo" />
+      <h1>Admin Login</h1>
+      <p class="admin-login__sub">Redo & Renew by Charline</p>
+
+      <form id="loginForm" class="admin-login__form">
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" name="loginEmail" placeholder="you@example.com" required />
+        </div>
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" name="loginPassword" placeholder="Your password" required />
+        </div>
+        <button type="submit" class="btn btn--primary btn--full">Log in</button>
+        <p class="form__note" id="loginNote" role="status"></p>
+      </form>
+
+      <a href="index.html" class="admin-login__back">← Back to site</a>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const note = document.getElementById("loginNote");
+
+      note.style.color = "var(--muted)";
+      note.textContent = "Logging in…";
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        note.style.color = "#c0392b";
+        note.textContent = "Invalid email or password. Please try again.";
+        return;
+      }
+
+      note.style.color = "var(--green)";
+      note.textContent = "Logged in! Redirecting…";
+      window.location.href = "dashboard.html";
+    });
+
+    // Redirect if already logged in
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.href = "dashboard.html";
+    });
+  </script>
+</body>
+</html>

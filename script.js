@@ -33,8 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ---------- Reveal on scroll ---------- */
   const reveals = document.querySelectorAll(".reveal");
+  let io = null;
   if ("IntersectionObserver" in window) {
-    const io = new IntersectionObserver(
+    io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e, i) => {
           if (e.isIntersecting) {
@@ -92,20 +93,263 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "ArrowRight") showImage(current + 1);
   });
 
+  /* ---------- Shop ---------- */
+  const products = [
+    { id: 1, name: "Sage Green Bedside", desc: "Hand-painted solid wood bedside with brass handles.", price: 145, img: "assets/img/piece-4.jpg", tag: "New" },
+    { id: 2, name: "Terracotta Sideboard", desc: "Restored mid-century sideboard, custom colour finish.", price: 320, img: "assets/img/piece-2.jpg", tag: null },
+    { id: 3, name: "Cream Accent Chair", desc: "Reupholstered occasional chair, solid frame.", price: 210, img: "assets/img/piece-5.jpg", tag: null },
+    { id: 4, name: "Forest Green Cabinet", desc: "Two-door cabinet, hand-finished with wax seal.", price: 280, img: "assets/img/piece-7.jpg", tag: "One of a kind" },
+    { id: 5, name: "Ochre Washstand", desc: "Vintage washstand restored with warm ochre tone.", price: 165, img: "assets/img/piece-3.jpg", tag: null },
+    { id: 6, name: "Heritage Dresser", desc: "Statement dresser, bespoke painted finish.", price: 450, img: "assets/img/piece-6.jpg", tag: "Last one" },
+  ];
+
+  const shopGrid = document.getElementById("shopGrid");
+  if (shopGrid) {
+    shopGrid.innerHTML = products.map((p) => `
+      <article class="product-card reveal" data-id="${p.id}">
+        <div class="product-card__media">
+          <img src="${p.img}" alt="${p.name}" loading="lazy" />
+          ${p.tag ? `<span class="product-card__badge">${p.tag}</span>` : ""}
+        </div>
+        <div class="product-card__body">
+          <h3 class="product-card__title">${p.name}</h3>
+          <p class="product-card__desc">${p.desc}</p>
+          <div class="product-card__foot">
+            <span class="product-card__price">£${p.price}</span>
+            <button class="product-card__btn" data-add="${p.id}">Add to Basket</button>
+          </div>
+        </div>
+      </article>
+    `).join("");
+    // re-observe newly added reveal cards
+    shopGrid.querySelectorAll(".reveal").forEach((el) => {
+      if ("IntersectionObserver" in window) io.observe(el);
+      else el.classList.add("in");
+    });
+  }
+
+  /* ---------- Cart ---------- */
+  let cart = JSON.parse(localStorage.getItem("rn_cart") || "[]");
+  const cartBtn = document.getElementById("cartBtn");
+  const cartDrawer = document.getElementById("cartDrawer");
+  const cartOverlay = document.getElementById("cartOverlay");
+  const cartClose = document.getElementById("cartClose");
+  const cartCount = document.getElementById("cartCount");
+  const cartItems = document.getElementById("cartItems");
+  const cartEmpty = document.getElementById("cartEmpty");
+  const cartFoot = document.getElementById("cartFoot");
+  const cartTotal = document.getElementById("cartTotal");
+
+  const fmt = (n) => "£" + n.toLocaleString("en-GB");
+  const saveCart = () => localStorage.setItem("rn_cart", JSON.stringify(cart));
+
+  const openCart = () => {
+    cartDrawer.classList.add("open");
+    cartOverlay.classList.add("open");
+    cartDrawer.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+  const closeCart = () => {
+    cartDrawer.classList.remove("open");
+    cartOverlay.classList.remove("open");
+    cartDrawer.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  };
+
+  const renderCart = () => {
+    saveCart();
+    const count = cart.reduce((s, i) => s + i.qty, 0);
+    cartCount.textContent = count;
+    cartCount.classList.toggle("show", count > 0);
+
+    if (cart.length === 0) {
+      cartEmpty.style.display = "block";
+      cartItems.innerHTML = "";
+      cartFoot.hidden = true;
+      return;
+    }
+    cartEmpty.style.display = "none";
+    cartFoot.hidden = false;
+    cartItems.innerHTML = cart.map((item) => {
+      const p = products.find((x) => x.id === item.id);
+      return `
+        <div class="cart-item" data-id="${item.id}">
+          <img class="cart-item__img" src="${p.img}" alt="${p.name}" />
+          <div class="cart-item__info">
+            <span class="cart-item__name">${p.name}</span>
+            <span class="cart-item__price">${fmt(p.price)}</span>
+            <div class="cart-item__qty">
+              <button class="qty-btn" data-dec="${item.id}" aria-label="Decrease">−</button>
+              <span class="cart-item__qty-num">${item.qty}</span>
+              <button class="qty-btn" data-inc="${item.id}" aria-label="Increase">+</button>
+            </div>
+          </div>
+          <button class="cart-item__remove" data-remove="${item.id}">Remove</button>
+        </div>
+      `;
+    }).join("");
+    const total = cart.reduce((s, i) => s + products.find((x) => x.id === i.id).price * i.qty, 0);
+    cartTotal.textContent = fmt(total);
+  };
+
+  const addToCart = (id) => {
+    const existing = cart.find((i) => i.id === id);
+    if (existing) existing.qty++;
+    else cart.push({ id, qty: 1 });
+    renderCart();
+    openCart();
+  };
+  const changeQty = (id, delta) => {
+    const item = cart.find((i) => i.id === id);
+    if (!item) return;
+    item.qty += delta;
+    if (item.qty <= 0) cart = cart.filter((i) => i.id !== id);
+    renderCart();
+  };
+  const removeItem = (id) => {
+    cart = cart.filter((i) => i.id !== id);
+    renderCart();
+  };
+
+  // delegate shop add buttons
+  document.addEventListener("click", (e) => {
+    const add = e.target.dataset.add;
+    if (add) addToCart(Number(add));
+    const inc = e.target.dataset.inc;
+    if (inc) changeQty(Number(inc), 1);
+    const dec = e.target.dataset.dec;
+    if (dec) changeQty(Number(dec), -1);
+    const rm = e.target.dataset.remove;
+    if (rm) removeItem(Number(rm));
+  });
+
+  cartBtn.addEventListener("click", openCart);
+  cartClose.addEventListener("click", closeCart);
+  cartOverlay.addEventListener("click", closeCart);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && cartDrawer.classList.contains("open")) closeCart();
+  });
+
+  const checkoutBtn = document.getElementById("checkoutBtn");
+  if (checkoutBtn) {
+    checkoutBtn.addEventListener("click", () => {
+      if (cart.length === 0) return;
+      window.location.href = "checkout.html";
+    });
+  }
+
+  // render cart state on load
+  renderCart();
+
+  /* ---------- FAQ (loaded from Supabase) ---------- */
+  const faqList = document.getElementById("faqList");
+  if (faqList && typeof supabase !== "undefined") {
+    supabase
+      .from("faq")
+      .select("id, question, answer, sort_order")
+      .order("sort_order", { ascending: true })
+      .then(({ data, error }) => {
+        if (error || !data || data.length === 0) {
+          faqList.innerHTML = '<p class="faq__loading">FAQs will be available soon.</p>';
+          return;
+        }
+        faqList.innerHTML = data.map((item, i) => `
+          <details class="faq__item reveal"${i === 0 ? " open" : ""}>
+            <summary class="faq__question">${item.question}</summary>
+            <div class="faq__answer"><p>${item.answer}</p></div>
+          </details>
+        `).join("");
+        if ("IntersectionObserver" in window && io) {
+          faqList.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+        } else {
+          faqList.querySelectorAll(".reveal").forEach((el) => el.classList.add("in"));
+        }
+      });
+  }
+
   /* ---------- Enquiry form ---------- */
   const form = document.getElementById("enquiryForm");
   const note = document.getElementById("formNote");
-  form.addEventListener("submit", (e) => {
+  const enquiryType = document.getElementById("service");
+  const panels = document.querySelectorAll("[data-panel]");
+  const dependentFields = document.querySelectorAll(".enquiry-dependent");
+  const disclaimer = document.querySelector(".form__disclaimer");
+  const disclaimerText = {
+    renew: "Please note: submitting this form is an enquiry only and does not secure a booking. A final price and timescale will be confirmed once the furniture and work required have been assessed.",
+    source: "Submitting this form is a sourcing enquiry and does not guarantee that a suitable piece will be found. I’ll contact you if I find something that matches your requirements before proceeding with any purchase.",
+    other: "Please note: submitting this form is an enquiry only and does not secure a booking. I’ll be in touch to discuss your request."
+  };
+
+  const updateEnquiryType = () => {
+    const selected = enquiryType.value;
+    panels.forEach((panel) => {
+      const active = Boolean(selected) && panel.dataset.panel === selected;
+      panel.hidden = !active;
+      panel.setAttribute("aria-hidden", String(!active));
+    });
+    dependentFields.forEach((field) => {
+      field.hidden = !selected;
+    });
+    disclaimer.textContent = disclaimerText[selected] || "";
+  };
+
+  enquiryType.addEventListener("change", updateEnquiryType);
+  updateEnquiryType();
+
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const name = form.name.value.trim();
-    const email = form.email.value.trim();
+    const name = form.elements.name.value.trim();
+    const email = form.elements.email.value.trim();
     if (!name || !email) {
       note.style.color = "#c0392b";
       note.textContent = "Please add your name and email so Charline can reply.";
       return;
     }
+
+    const type = enquiryType.value;
+    const enquiry = {
+      enquiry_type: type,
+      name,
+      email,
+      phone: form.elements.phone ? form.elements.phone.value.trim() : "",
+      final_notes: form.elements.finalNotes ? form.elements.finalNotes.value.trim() : "",
+      renew_furniture_type: form.elements.renewFurnitureType ? form.elements.renewFurnitureType.value : "",
+      renew_dimensions: form.elements.renewDimensions ? form.elements.renewDimensions.value.trim() : "",
+      renew_location: form.elements.renewLocation ? form.elements.renewLocation.value.trim() : "",
+      renew_condition: form.elements.renewCondition ? form.elements.renewCondition.value.trim() : "",
+      renew_work: form.elements.renewWork ? form.elements.renewWork.value : "",
+      renew_style: form.elements.renewStyle ? form.elements.renewStyle.value.trim() : "",
+      renew_hardware: form.elements.renewHardware ? form.elements.renewHardware.value : "",
+      renew_collection: form.elements.renewCollection ? form.elements.renewCollection.value : "",
+      renew_access: form.elements.renewAccess ? form.elements.renewAccess.value.trim() : "",
+      renew_completion: form.elements.renewCompletion ? form.elements.renewCompletion.value.trim() : "",
+      source_furniture_type: form.elements.sourceFurnitureType ? form.elements.sourceFurnitureType.value.trim() : "",
+      source_dimensions: form.elements.sourceDimensions ? form.elements.sourceDimensions.value.trim() : "",
+      source_style: form.elements.sourceStyle ? form.elements.sourceStyle.value.trim() : "",
+      source_features: form.elements.sourceFeatures ? form.elements.sourceFeatures.value.trim() : "",
+      source_upcycle: form.elements.sourceUpcycle ? form.elements.sourceUpcycle.value : "",
+      source_finish: form.elements.sourceFinish ? form.elements.sourceFinish.value.trim() : "",
+      source_location: form.elements.sourceLocation ? form.elements.sourceLocation.value.trim() : "",
+      source_deadline: form.elements.sourceDeadline ? form.elements.sourceDeadline.value.trim() : "",
+      source_notes: form.elements.sourceNotes ? form.elements.sourceNotes.value.trim() : "",
+      other_message: form.elements.otherMessage ? form.elements.otherMessage.value.trim() : ""
+    };
+
+    note.style.color = "var(--muted)";
+    note.textContent = "Sending your enquiry…";
+
+    if (typeof supabase !== "undefined") {
+      const { error } = await supabase.from("enquiries").insert([enquiry]);
+      if (error) {
+        note.style.color = "#c0392b";
+        note.textContent = "Sorry, something went wrong. Please try again or email Charline directly.";
+        return;
+      }
+    }
+
     note.style.color = "var(--green)";
-    note.textContent = "Thank you! Your enquiry has been noted — Charline will be in touch soon. ♻️";
+    note.textContent = "Thank you! Your enquiry has been sent — Charline will be in touch soon.";
     form.reset();
+    updateEnquiryType();
   });
 });

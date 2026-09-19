@@ -27,9 +27,15 @@
         <a href="#story">Our Story</a>
         <a href="#values">Why Us</a>
         <a href="#gallery">Gallery</a>
+        <a href="#shop">Shop</a>
         <a href="#process">Process</a>
+        <a href="#faq">FAQ</a>
         <a href="#contact" class="nav__cta">Get in Touch</a>
       </nav>
+      <button class="nav__cart" id="cartBtn" aria-label="Open cart">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span class="nav__cart-count" id="cartCount">0</span>
+      </button>
       <button class="nav__toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -47,8 +53,8 @@
       <h1 class="hero__title reveal">Every piece has a story<br /><em>worth saving.</em></h1>
       <p class="hero__lead reveal">We rescue forgotten, worn-out furniture and give it a fresh, stylish second life — keeping it out of landfills and in loving homes.</p>
       <div class="hero__actions reveal">
-        <a href="#gallery" class="btn btn--primary">View Our Work</a>
-        <a href="#contact" class="btn btn--ghost">Commission a Piece</a>
+        <a href="#shop" class="btn btn--primary">Shop Pieces</a>
+        <a href="#gallery" class="btn btn--ghost">View Our Work</a>
       </div>
     </div>
     <a href="#story" class="hero__scroll" aria-label="Scroll to story">
@@ -152,6 +158,21 @@
     </div>
   </section>
 
+  <!-- ===== SHOP ===== -->
+  <section class="shop" id="shop">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow reveal">Available now</span>
+        <h2 class="reveal">Take a piece home</h2>
+        <p class="section-sub reveal">Each piece is one-of-a-kind, hand-finished by Charline. Once it's gone, it's gone.</p>
+      </div>
+      <div class="shop__grid" id="shopGrid">
+        <!-- Product cards injected by script.js -->
+      </div>
+      <p class="shop__note reveal">♻️ Every purchase keeps solid furniture out of landfill. Local delivery available across Melton Mowbray & surrounding areas.</p>
+    </div>
+  </section>
+
   <!-- ===== PROCESS ===== -->
   <section class="process" id="process">
     <div class="container">
@@ -188,6 +209,20 @@
     </div>
   </section>
 
+  <!-- ===== FAQ ===== -->
+  <section class="faq" id="faq">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow reveal">Good to know</span>
+        <h2 class="reveal">Frequently asked questions</h2>
+        <p class="section-sub reveal">Everything you need to know about commissions, sourcing, delivery and more.</p>
+      </div>
+      <div class="faq__list" id="faqList">
+        <p class="faq__loading reveal">Loading questions…</p>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== CONTACT ===== -->
   <section class="contact" id="contact">
     <div class="container contact__grid">
@@ -209,29 +244,203 @@
         </div>
       </div>
       <form class="contact__form reveal" id="enquiryForm" novalidate>
-        <div class="field">
-          <label for="name">Your name</label>
-          <input type="text" id="name" name="name" placeholder="e.g. Jane Smith" required />
-        </div>
-        <div class="field">
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" placeholder="you@example.com" required />
-        </div>
-        <div class="field">
-          <label for="service">I'm interested in…</label>
-          <select id="service" name="service">
-            <option>Renewing a piece I own</option>
-            <option>Buying a finished piece</option>
-            <option>A bespoke commission</option>
-            <option>Something else</option>
+        <div class="field form-intro">
+          <label for="service">What can I help you with?</label>
+          <select id="service" name="service" required>
+            <option value="" selected disabled>Please choose an option…</option>
+            <option value="renew">Renewing a piece I own</option>
+            <option value="source">Source an item for me</option>
+            <option value="other">Something else</option>
           </select>
         </div>
-        <div class="field">
-          <label for="message">Tell us about your piece</label>
-          <textarea id="message" name="message" rows="4" placeholder="What would you like renewed?"></textarea>
+
+        <div class="form-panel" data-panel="renew">
+          <p class="form-panel__intro">Thinking about giving a piece of furniture a new lease of life?</p>
+          <p class="form-panel__intro">Tell me a little about your project below. If you’re unsure about colours or finishes, don’t worry — we can work that out together!</p>
+
+          <h3>About the Furniture</h3>
+          <div class="field">
+            <label for="renewFurnitureType">What type of furniture would you like upcycled?</label>
+            <select id="renewFurnitureType" name="renewFurnitureType">
+              <option value="">Please select…</option>
+              <option>Chest of drawers</option>
+              <option>Wardrobe</option>
+              <option>Bedside tables</option>
+              <option>Sideboard</option>
+              <option>Dressing table</option>
+              <option>Table or desk</option>
+              <option>Chair or seating</option>
+              <option>Other furniture</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="renewDimensions">What are the approximate dimensions?</label>
+            <span class="field__hint">Width × depth × height.</span>
+            <input type="text" id="renewDimensions" name="renewDimensions" placeholder="e.g. 120 × 45 × 80 cm" />
+          </div>
+          <div class="field">
+            <label for="renewPhotos">Please upload clear photos of the furniture.</label>
+            <span class="field__hint">Please include the front, sides, top and any drawers/cupboards where possible.</span>
+            <input type="file" id="renewPhotos" name="renewPhotos" accept="image/*" multiple />
+          </div>
+          <div class="field">
+            <label for="renewLocation">Where is the furniture located?</label>
+            <span class="field__hint">Town/postcode.</span>
+            <input type="text" id="renewLocation" name="renewLocation" placeholder="e.g. Melton Mowbray, LE13" />
+          </div>
+          <div class="field">
+            <label for="renewCondition">What condition is the furniture in?</label>
+            <span class="field__hint">Please mention any damage, repairs, loose joints, existing paint, varnish, wax or other finishes.</span>
+            <textarea id="renewCondition" name="renewCondition" rows="4"></textarea>
+          </div>
+
+          <h3>Your Ideas</h3>
+          <div class="field">
+            <label for="renewWork">What would you like done to the furniture?</label>
+            <select id="renewWork" name="renewWork">
+              <option value="">Please select…</option>
+              <option>Painted</option>
+              <option>Stained/natural wood</option>
+              <option>Combination of paint and wood</option>
+              <option>I’m not sure — I’d like advice</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="renewStyle">Do you have a colour, finish or style in mind?</label>
+            <textarea id="renewStyle" name="renewStyle" rows="3"></textarea>
+          </div>
+          <div class="field">
+            <label for="renewHardware">Would you like to keep or change the existing handles/hardware?</label>
+            <select id="renewHardware" name="renewHardware">
+              <option value="">Please select…</option>
+              <option>Keep</option>
+              <option>Change</option>
+              <option>I’m not sure</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="renewInspiration">Please upload any inspiration photos if you have them.</label>
+            <input type="file" id="renewInspiration" name="renewInspiration" accept="image/*" multiple />
+          </div>
+
+          <h3>Practical Details</h3>
+          <div class="field">
+            <label for="renewCollection">Will you arrange collection, or would you like delivery?</label>
+            <select id="renewCollection" name="renewCollection">
+              <option value="">Please select…</option>
+              <option>I’ll arrange collection</option>
+              <option>I’d like delivery</option>
+              <option>I’m not sure</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="renewAccess">Is there anything I should know about access or delivery?</label>
+            <span class="field__hint">For example: stairs, narrow doorways or difficult access.</span>
+            <textarea id="renewAccess" name="renewAccess" rows="3"></textarea>
+          </div>
+
+          <h3>Budget &amp; Timescale</h3>
+          <div class="field">
+            <label for="renewCompletion">When would you ideally like the piece completed?</label>
+            <input type="text" id="renewCompletion" name="renewCompletion" placeholder="e.g. By the end of June" />
+          </div>
         </div>
-        <button type="submit" class="btn btn--primary btn--full">Send Enquiry</button>
-        <p class="form__note" id="formNote" role="status"></p>
+
+        <div class="form-panel" data-panel="source" hidden>
+          <p class="form-panel__intro"><strong>Furniture Sourcing Request 🪑</strong></p>
+          <p class="form-panel__intro">Looking for a particular piece of furniture but can’t find quite the right one?</p>
+          <p class="form-panel__intro">Tell me what you’re looking for and I’ll keep an eye out for suitable pieces. Once I find something that could work, I’ll send you the details and photos before anything is purchased.</p>
+
+          <h3>What are you looking for?</h3>
+          <div class="field">
+            <label for="sourceFurnitureType">What type of furniture are you looking for?</label>
+            <span class="field__hint">For example: chest of drawers, wardrobe, bedside tables, sideboard, dressing table etc.</span>
+            <input type="text" id="sourceFurnitureType" name="sourceFurnitureType" />
+          </div>
+          <div class="field">
+            <label for="sourceDimensions">What approximate size do you need?</label>
+            <span class="field__hint">Please provide maximum width × depth × height.</span>
+            <input type="text" id="sourceDimensions" name="sourceDimensions" placeholder="e.g. 120 × 45 × 80 cm" />
+          </div>
+          <div class="field">
+            <label for="sourceStyle">What style are you looking for?</label>
+            <span class="field__hint">For example: traditional, modern, vintage, solid wood etc.</span>
+            <input type="text" id="sourceStyle" name="sourceStyle" />
+          </div>
+          <div class="field">
+            <label for="sourceFeatures">Do you have any must-have features?</label>
+            <span class="field__hint">For example: number of drawers, cupboards, mirror, specific shape or style.</span>
+            <textarea id="sourceFeatures" name="sourceFeatures" rows="3"></textarea>
+          </div>
+
+          <h3>Your Plans</h3>
+          <div class="field">
+            <label for="sourceUpcycle">Would you like the furniture upcycled once sourced?</label>
+            <select id="sourceUpcycle" name="sourceUpcycle">
+              <option value="">Please select…</option>
+              <option>Yes</option>
+              <option>No</option>
+              <option>I’m not sure yet</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sourceFinish">If you’d like it upcycled, what colours or finishes are you considering?</label>
+            <textarea id="sourceFinish" name="sourceFinish" rows="3"></textarea>
+          </div>
+          <div class="field">
+            <label for="sourceInspiration">Do you have any inspiration photos?</label>
+            <span class="field__hint">Upload them here if you have any.</span>
+            <input type="file" id="sourceInspiration" name="sourceInspiration" accept="image/*" multiple />
+          </div>
+
+          <h3>Location</h3>
+          <div class="field">
+            <label for="sourceLocation">Where will the furniture be going?</label>
+            <span class="field__hint">Town/postcode.</span>
+            <input type="text" id="sourceLocation" name="sourceLocation" />
+          </div>
+          <div class="field">
+            <label for="sourceDeadline">Do you have a deadline or date you need it by?</label>
+            <input type="text" id="sourceDeadline" name="sourceDeadline" />
+          </div>
+
+          <h3>A Few Final Details</h3>
+          <div class="field">
+            <label for="sourceNotes">Is there anything else I should know about what you’re looking for?</label>
+            <textarea id="sourceNotes" name="sourceNotes" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="form-panel" data-panel="other" hidden>
+          <div class="field">
+            <label for="otherMessage">Tell me a little more about what you need.</label>
+            <textarea id="otherMessage" name="otherMessage" rows="6" placeholder="How can I help?"></textarea>
+          </div>
+        </div>
+
+        <div class="form-contact-details enquiry-dependent" hidden>
+          <h3>Finally…</h3>
+          <div class="field">
+            <label for="finalNotes">Is there anything else you’d like me to know about your project?</label>
+            <textarea id="finalNotes" name="finalNotes" rows="3"></textarea>
+          </div>
+          <div class="field">
+            <label for="name">Your name</label>
+            <input type="text" id="name" name="name" placeholder="e.g. Jane Smith" required />
+          </div>
+          <div class="field">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" required />
+          </div>
+          <div class="field">
+            <label for="phone">Phone number</label>
+            <input type="tel" id="phone" name="phone" />
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--full enquiry-dependent" hidden>Submit enquiry</button>
+        <p class="form__disclaimer enquiry-dependent" hidden>Please note: submitting this form is an enquiry only and does not secure a booking. A final price and timescale will be confirmed once the furniture and work required have been assessed.</p>
+        <p class="form__note enquiry-dependent" id="formNote" role="status" hidden></p>
       </form>
     </div>
   </section>
@@ -247,9 +456,35 @@
         </div>
       </div>
       <p class="footer__tag">Why replace when we can renew? ♻️</p>
+      <nav class="footer__legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="refunds.html">Refund Policy</a>
+        <a href="terms.html">Terms of Service</a>
+      </nav>
       <p class="footer__copy">© <span id="year"></span> Redo & Renew by Charline. All rights reserved.</p>
     </div>
   </footer>
+
+  <!-- ===== CART DRAWER ===== -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
+    <div class="cart-drawer__head">
+      <h3>Your Basket</h3>
+      <button class="cart-drawer__close" id="cartClose" aria-label="Close cart">&times;</button>
+    </div>
+    <div class="cart-drawer__body" id="cartBody">
+      <p class="cart-drawer__empty" id="cartEmpty">Your basket is empty.<br />Have a look at the pieces below! ♻️</p>
+      <div class="cart-drawer__items" id="cartItems"></div>
+    </div>
+    <div class="cart-drawer__foot" id="cartFoot" hidden>
+      <div class="cart-drawer__total">
+        <span>Total</span>
+        <strong id="cartTotal">£0</strong>
+      </div>
+      <button class="btn btn--primary btn--full" id="checkoutBtn">Checkout</button>
+      <p class="cart-drawer__hint">Demo checkout — no payment is taken.</p>
+    </div>
+  </aside>
 
   <!-- ===== LIGHTBOX ===== -->
   <div class="lightbox" id="lightbox" aria-hidden="true">
@@ -259,6 +494,8 @@
     <button class="lightbox__nav lightbox__nav--next" id="lbNext" aria-label="Next">&#8250;</button>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

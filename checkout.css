@@ -1,0 +1,182 @@
+/* ============================================================
+   Checkout page — Redo & Renew by Charline
+   ============================================================ */
+
+.checkout__back {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--green-dark);
+  transition: color 0.3s;
+}
+.checkout__back:hover { color: var(--accent); }
+
+/* ===== Layout ===== */
+.checkout { padding: 120px 0 80px; background: var(--cream); min-height: 100vh; }
+.checkout__grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 50px;
+  align-items: start;
+}
+.checkout__main h1 {
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  margin-bottom: 10px;
+}
+.checkout__lead { color: var(--muted); margin-bottom: 44px; font-size: 1.05rem; }
+
+/* ===== Steps ===== */
+.checkout__step {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 32px 34px;
+  margin-bottom: 22px;
+  box-shadow: var(--shadow-sm);
+}
+.checkout__step-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.checkout__step-num {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--green);
+  color: var(--cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Fraunces", serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+.checkout__step-head h2 { font-size: 1.5rem; margin: 0; }
+
+/* ===== Fields ===== */
+.checkout__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.field--full { grid-column: span 2; }
+.field__opt { font-weight: 400; color: var(--muted); font-size: 0.85em; }
+
+/* ===== Payment banner ===== */
+.checkout__pay-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(192, 138, 94, 0.12);
+  border: 1px solid rgba(192, 138, 94, 0.3);
+  color: #9a6d44;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-bottom: 22px;
+}
+
+/* ===== Place order button ===== */
+.checkout__place {
+  font-size: 1.05rem;
+  padding: 18px 30px;
+  margin-top: 6px;
+}
+.checkout__secure {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 14px;
+}
+
+/* ===== Order summary ===== */
+.checkout__summary { position: sticky; top: 100px; }
+.summary {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 30px 28px;
+  box-shadow: var(--shadow);
+}
+.summary__title {
+  font-size: 1.4rem;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.summary__items { display: flex; flex-direction: column; gap: 16px; max-height: 320px; overflow-y: auto; }
+.summary-item { display: flex; gap: 14px; align-items: center; }
+.summary-item__img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.summary-item__info { flex: 1; min-width: 0; }
+.summary-item__name { font-family: "Fraunces", serif; font-weight: 600; font-size: 0.98rem; color: var(--green-dark); line-height: 1.2; }
+.summary-item__meta { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+.summary-item__price { font-weight: 600; color: var(--green); font-size: 0.95rem; white-space: nowrap; }
+.summary__divider { height: 1px; background: var(--line); margin: 22px 0; }
+.summary__row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem; color: var(--muted); }
+.summary__row--total { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+.summary__row--total span { font-size: 1.05rem; color: var(--ink); font-weight: 600; }
+.summary__row--total strong { font-family: "Fraunces", serif; font-size: 1.7rem; color: var(--green-dark); }
+.summary__trust { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.summary__trust p { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
+.summary__edit { display: inline-block; margin-top: 16px; font-size: 0.88rem; font-weight: 600; color: var(--green); text-decoration: underline; }
+.summary__edit:hover { color: var(--accent); }
+
+.summary__empty { text-align: center; color: var(--muted); padding: 30px 10px; font-size: 0.95rem; }
+.summary__empty a { display: inline-block; margin-top: 14px; color: var(--green); font-weight: 600; text-decoration: underline; }
+
+/* ===== Success overlay ===== */
+.success {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(43, 53, 47, 0.85);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.success.open { display: flex; }
+.success__card {
+  background: var(--cream);
+  border-radius: 20px;
+  padding: 50px 44px;
+  text-align: center;
+  max-width: 440px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+  animation: pop 0.5s var(--ease);
+}
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.92) translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+.success__check {
+  width: 76px; height: 76px;
+  border-radius: 50%;
+  background: var(--green);
+  color: var(--cream);
+  font-size: 2.4rem;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 24px;
+  animation: checkPop 0.6s var(--ease) 0.15s both;
+}
+@keyframes checkPop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+.success__card h2 { font-size: 1.8rem; margin-bottom: 14px; }
+.success__card p { color: var(--muted); margin-bottom: 12px; line-height: 1.6; }
+.success__ref { font-size: 0.9rem; }
+.success__ref strong { color: var(--green); font-family: "Fraunces", serif; }
+.success__card .btn { margin-top: 22px; }
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .checkout__grid { grid-template-columns: 1fr; gap: 30px; }
+  .checkout__summary { position: static; }
+}
+@media (max-width: 560px) {
+  .checkout { padding: 100px 0 60px; }
+  .checkout__step { padding: 24px 22px; }
+  .checkout__fields { grid-template-columns: 1fr; }
+  .field--full { grid-column: span 1; }
+  .success__card { padding: 36px 26px; }
+}
