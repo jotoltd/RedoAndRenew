@@ -27,29 +27,18 @@
   });
 
   /* ---------- Enquiries ---------- */
-  const enquiriesList = document.getElementById("enquiriesList");
+  const enquiryLists = {
+    renew: document.getElementById("enquiriesRenew"),
+    source: document.getElementById("enquiriesSource"),
+    other: document.getElementById("enquiriesOther")
+  };
   const typeLabels = {
     renew: "Renewing a piece",
     source: "Sourcing request",
     other: "Something else"
   };
 
-  const loadEnquiries = async () => {
-    const { data, error } = await supabase
-      .from("enquiries")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      enquiriesList.innerHTML = '<p class="admin-login__note">Error loading enquiries.</p>';
-      return;
-    }
-    if (!data || data.length === 0) {
-      enquiriesList.innerHTML = '<p class="admin-login__note">No enquiries yet.</p>';
-      return;
-    }
-
-    enquiriesList.innerHTML = data.map((e) => {
+  const enquiryCard = (e) => {
       const date = new Date(e.created_at).toLocaleString("en-GB", {
         day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
       });
@@ -102,14 +91,33 @@
           </div>
         </div>
       `;
-    }).join("");
+  };
 
-    enquiriesList.querySelectorAll("[data-status]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const id = btn.dataset.id;
-        const status = btn.dataset.status;
-        await supabase.from("enquiries").update({ status }).eq("id", id);
-        loadEnquiries();
+  const loadEnquiries = async () => {
+    const { data, error } = await supabase
+      .from("enquiries")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      const msg = error ? "Error loading enquiries." : "No enquiries yet.";
+      Object.values(enquiryLists).forEach((el) => {
+        el.innerHTML = `<p class="admin-login__note">${msg}</p>`;
+      });
+      return;
+    }
+
+    Object.entries(enquiryLists).forEach(([type, el]) => {
+      const items = data.filter((e) => e.enquiry_type === type);
+      el.innerHTML = items.length
+        ? items.map(enquiryCard).join("")
+        : '<p class="admin-login__note">No enquiries yet.</p>';
+
+      el.querySelectorAll("[data-status]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          await supabase.from("enquiries").update({ status: btn.dataset.status }).eq("id", btn.dataset.id);
+          loadEnquiries();
+        });
       });
     });
   };

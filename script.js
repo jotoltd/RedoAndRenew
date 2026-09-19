@@ -93,30 +93,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "ArrowRight") showImage(current + 1);
   });
 
-  /* ---------- Shop ---------- */
-  const products = [
-    { id: 1, name: "Sage Green Bedside", desc: "Hand-painted solid wood bedside with brass handles.", price: 145, img: "assets/img/piece-4.jpg", tag: "New" },
-    { id: 2, name: "Terracotta Sideboard", desc: "Restored mid-century sideboard, custom colour finish.", price: 320, img: "assets/img/piece-2.jpg", tag: null },
-    { id: 3, name: "Cream Accent Chair", desc: "Reupholstered occasional chair, solid frame.", price: 210, img: "assets/img/piece-5.jpg", tag: null },
-    { id: 4, name: "Forest Green Cabinet", desc: "Two-door cabinet, hand-finished with wax seal.", price: 280, img: "assets/img/piece-7.jpg", tag: "One of a kind" },
-    { id: 5, name: "Ochre Washstand", desc: "Vintage washstand restored with warm ochre tone.", price: 165, img: "assets/img/piece-3.jpg", tag: null },
-    { id: 6, name: "Heritage Dresser", desc: "Statement dresser, bespoke painted finish.", price: 450, img: "assets/img/piece-6.jpg", tag: "Last one" },
-  ];
+  /* ---------- Shop (products loaded from Supabase) ---------- */
+  let products = [];
 
   const shopGrid = document.getElementById("shopGrid");
-  if (shopGrid) {
+
+  const renderShop = () => {
+    if (!shopGrid) return;
+    if (products.length === 0) {
+      shopGrid.innerHTML = '<p class="shop__empty reveal in">No pieces available right now — new ones are added regularly. <a href="#contact">Ask about a commission →</a></p>';
+      return;
+    }
     shopGrid.innerHTML = products.map((p) => `
       <article class="product-card reveal" data-id="${p.id}">
         <div class="product-card__media">
-          <img src="${p.img}" alt="${p.name}" loading="lazy" />
-          ${p.tag ? `<span class="product-card__badge">${p.tag}</span>` : ""}
+          <img src="${p.image_url}" alt="${p.name}" loading="lazy" />
+          ${p.sold ? '<span class="product-card__badge product-card__badge--sold">Sold</span>' : p.tag ? `<span class="product-card__badge">${p.tag}</span>` : ""}
         </div>
         <div class="product-card__body">
           <h3 class="product-card__title">${p.name}</h3>
-          <p class="product-card__desc">${p.desc}</p>
+          <p class="product-card__desc">${p.description || ""}</p>
           <div class="product-card__foot">
-            <span class="product-card__price">£${p.price}</span>
-            <button class="product-card__btn" data-add="${p.id}">Add to Basket</button>
+            <span class="product-card__price">£${Number(p.price).toLocaleString("en-GB")}</span>
+            <button class="product-card__btn" data-add="${p.id}" ${p.sold ? "disabled" : ""}>${p.sold ? "Sold" : "Add to Basket"}</button>
           </div>
         </div>
       </article>
@@ -126,7 +125,26 @@ document.addEventListener("DOMContentLoaded", () => {
       if ("IntersectionObserver" in window) io.observe(el);
       else el.classList.add("in");
     });
-  }
+  };
+
+  const loadProducts = async () => {
+    if (!shopGrid) return;
+    if (typeof supabase === "undefined") {
+      renderShop();
+      return;
+    }
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) {
+      products = data;
+      // drop stale cart entries that no longer match a real product
+      cart = cart.filter((i) => products.some((p) => p.id === i.id));
+      renderCart();
+    }
+    renderShop();
+  };
 
   /* ---------- Cart ---------- */
   let cart = JSON.parse(localStorage.getItem("rn_cart") || "[]");
@@ -172,9 +190,10 @@ document.addEventListener("DOMContentLoaded", () => {
     cartFoot.hidden = false;
     cartItems.innerHTML = cart.map((item) => {
       const p = products.find((x) => x.id === item.id);
+      if (!p) return "";
       return `
         <div class="cart-item" data-id="${item.id}">
-          <img class="cart-item__img" src="${p.img}" alt="${p.name}" />
+          <img class="cart-item__img" src="${p.image_url}" alt="${p.name}" />
           <div class="cart-item__info">
             <span class="cart-item__name">${p.name}</span>
             <span class="cart-item__price">${fmt(p.price)}</span>
@@ -188,7 +207,10 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
     }).join("");
-    const total = cart.reduce((s, i) => s + products.find((x) => x.id === i.id).price * i.qty, 0);
+    const total = cart.reduce((s, i) => {
+      const p = products.find((x) => x.id === i.id);
+      return p ? s + p.price * i.qty : s;
+    }, 0);
     cartTotal.textContent = fmt(total);
   };
 
@@ -238,8 +260,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // render cart state on load
+  // render cart state on load, then pull products from Supabase
   renderCart();
+  loadProducts();
 
   /* ---------- FAQ (loaded from Supabase) ---------- */
   const faqList = document.getElementById("faqList");

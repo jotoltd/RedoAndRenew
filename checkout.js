@@ -6,14 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const year = document.getElementById("year");
   if (year) year.textContent = new Date().getFullYear();
 
-  const products = [
-    { id: 1, name: "Sage Green Bedside", price: 145, img: "assets/img/piece-4.jpg" },
-    { id: 2, name: "Terracotta Sideboard", price: 320, img: "assets/img/piece-2.jpg" },
-    { id: 3, name: "Cream Accent Chair", price: 210, img: "assets/img/piece-5.jpg" },
-    { id: 4, name: "Forest Green Cabinet", price: 280, img: "assets/img/piece-7.jpg" },
-    { id: 5, name: "Ochre Washstand", price: 165, img: "assets/img/piece-3.jpg" },
-    { id: 6, name: "Heritage Dresser", price: 450, img: "assets/img/piece-6.jpg" },
-  ];
+  let products = [];
 
   let cart = JSON.parse(localStorage.getItem("rn_cart") || "[]");
   const fmt = (n) => "£" + n.toLocaleString("en-GB");
@@ -39,9 +32,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     summaryItems.innerHTML = cart.map((item) => {
       const p = products.find((x) => x.id === item.id);
+      if (!p) return "";
       return `
         <div class="summary-item">
-          <img class="summary-item__img" src="${p.img}" alt="${p.name}" />
+          <img class="summary-item__img" src="${p.image_url}" alt="${p.name}" />
           <div class="summary-item__info">
             <div class="summary-item__name">${p.name}</div>
             <div class="summary-item__meta">Qty ${item.qty} · ${fmt(p.price)}</div>
@@ -51,7 +45,10 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     }).join("");
 
-    const subtotal = cart.reduce((s, i) => s + products.find((x) => x.id === i.id).price * i.qty, 0);
+    const subtotal = cart.reduce((s, i) => {
+      const p = products.find((x) => x.id === i.id);
+      return p ? s + p.price * i.qty : s;
+    }, 0);
     const delivery = Number(deliverySelect.value) || 0;
     const total = subtotal + delivery;
 
@@ -62,7 +59,19 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   deliverySelect.addEventListener("change", render);
-  render();
+
+  // Load products from Supabase, then render the summary
+  const init = async () => {
+    if (typeof supabase !== "undefined") {
+      const { data } = await supabase.from("products").select("*");
+      if (data) products = data;
+      // drop stale cart entries that no longer match a real product
+      cart = cart.filter((i) => products.some((p) => p.id === i.id));
+      localStorage.setItem("rn_cart", JSON.stringify(cart));
+    }
+    render();
+  };
+  init();
 
   /* ---------- Card input formatting ---------- */
   const cCard = document.getElementById("cCard");
