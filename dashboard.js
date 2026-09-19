@@ -4,7 +4,7 @@
 
 (async () => {
   if (sessionStorage.getItem("rr_admin") !== "1") {
-    window.location.href = "admin.html";
+    window.location.href = "admin/";
     return;
   }
 
@@ -23,7 +23,7 @@
   /* ---------- Logout ---------- */
   document.getElementById("logoutBtn").addEventListener("click", () => {
     sessionStorage.removeItem("rr_admin");
-    window.location.href = "admin.html";
+    window.location.href = "admin/";
   });
 
   /* ---------- Enquiries ---------- */
