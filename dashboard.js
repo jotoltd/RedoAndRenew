@@ -84,6 +84,11 @@
               ${fields.map(([label, val]) => `<div class="enquiry-card__detail"><strong>${label}</strong><span>${val}</span></div>`).join("")}
             </div>
           ` : ""}
+          ${Array.isArray(e.photos) && e.photos.length > 0 ? `
+            <div class="enquiry-card__photos">
+              ${e.photos.map((url) => `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="Enquiry photo" loading="lazy" /></a>`).join("")}
+            </div>
+          ` : ""}
           <div class="enquiry-card__actions">
             <button class="enquiry-card__btn" data-status="read" data-id="${e.id}">Mark as read</button>
             <button class="enquiry-card__btn" data-status="replied" data-id="${e.id}">Mark as replied</button>

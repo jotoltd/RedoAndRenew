@@ -55,6 +55,12 @@
     .enquiry-card__detail { font-size: 0.9rem; }
     .enquiry-card__detail strong { color: var(--green-dark); display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
     .enquiry-card__detail span { color: var(--muted); line-height: 1.5; }
+    .enquiry-card__photos { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .enquiry-card__photos img {
+      width: 90px; height: 90px; object-fit: cover; border-radius: 8px;
+      border: 1px solid var(--line); transition: transform 0.25s;
+    }
+    .enquiry-card__photos a:hover img { transform: scale(1.05); }
     .enquiry-card__actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
     .enquiry-card__btn {
       padding: 8px 16px; border-radius: 100px; border: 1.5px solid var(--line);

@@ -362,6 +362,31 @@ document.addEventListener("DOMContentLoaded", () => {
     note.textContent = "Sending your enquiry…";
 
     if (typeof supabase !== "undefined") {
+      // upload any attached photos to Supabase Storage first
+      const photoUrls = [];
+      const fileInputs = ["renewPhotos", "renewInspiration", "sourceInspiration"];
+      let hasFiles = false;
+      for (const name of fileInputs) {
+        const input = form.elements[name];
+        if (input && input.files && input.files.length > 0) { hasFiles = true; break; }
+      }
+      if (hasFiles) note.textContent = "Uploading your photos…";
+
+      for (const name of fileInputs) {
+        const input = form.elements[name];
+        if (!input || !input.files) continue;
+        for (const file of input.files) {
+          const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${file.name.replace(/[^\w.\-]/g, "_")}`;
+          const { error: upErr } = await supabase.storage.from("enquiry-photos").upload(path, file);
+          if (!upErr) {
+            const { data: pub } = supabase.storage.from("enquiry-photos").getPublicUrl(path);
+            if (pub && pub.publicUrl) photoUrls.push(pub.publicUrl);
+          }
+        }
+      }
+      enquiry.photos = photoUrls;
+
+      note.textContent = "Sending your enquiry…";
       const { error } = await supabase.from("enquiries").insert([enquiry]);
       if (error) {
         note.style.color = "#c0392b";
