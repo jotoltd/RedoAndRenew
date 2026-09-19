@@ -3,8 +3,7 @@
    ============================================================ */
 
 (async () => {
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (!sessionData.session) {
+  if (sessionStorage.getItem("rr_admin") !== "1") {
     window.location.href = "admin.html";
     return;
   }
@@ -22,8 +21,8 @@
   });
 
   /* ---------- Logout ---------- */
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
-    await supabase.auth.signOut();
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    sessionStorage.removeItem("rr_admin");
     window.location.href = "admin.html";
   });
 

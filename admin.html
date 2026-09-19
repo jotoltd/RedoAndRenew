@@ -51,23 +51,22 @@
       note.style.color = "var(--muted)";
       note.textContent = "Logging in…";
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        note.style.color = "#c0392b";
-        note.textContent = "Invalid email or password. Please try again.";
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        sessionStorage.setItem("rr_admin", "1");
+        note.style.color = "var(--green)";
+        note.textContent = "Logged in! Redirecting…";
+        window.location.href = "dashboard.html";
         return;
       }
 
-      note.style.color = "var(--green)";
-      note.textContent = "Logged in! Redirecting…";
-      window.location.href = "dashboard.html";
+      note.style.color = "#c0392b";
+      note.textContent = "Invalid email or password. Please try again.";
     });
 
     // Redirect if already logged in
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) window.location.href = "dashboard.html";
-    });
+    if (sessionStorage.getItem("rr_admin") === "1") {
+      window.location.href = "dashboard.html";
+    }
   </script>
 </body>
 </html>
