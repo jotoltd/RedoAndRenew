@@ -172,6 +172,7 @@
         <button class="dashboard__tab" data-tab="products">Products</button>
         <button class="dashboard__tab" data-tab="delivery">Delivery</button>
         <button class="dashboard__tab" data-tab="faq">FAQ Editor</button>
+        <button class="dashboard__tab" data-tab="settings">Settings</button>
       </div>
 
       <!-- Orders panel -->
@@ -216,6 +217,15 @@
           <p class="admin-login__note">Loading FAQ editor…</p>
         </div>
         <button class="faq-editor__add" id="addFaqBtn">+ Add new question</button>
+      </div>
+
+      <!-- Settings panel -->
+      <div class="dashboard__panel" data-panel="settings">
+        <div class="faq-editor__item" style="max-width: 540px;">
+          <label class="product-item__sold"><input type="checkbox" id="settingShowStock" /> Show stock count on shop &amp; product pages</label>
+          <p style="font-size: 0.82rem; color: var(--muted);">When off, sold-out pieces still show a Sold badge — only the "X available" count is hidden.</p>
+          <p class="form__note" id="settingsNote" style="text-align:left; margin-top:8px;"></p>
+        </div>
       </div>
     </div>
   </main>

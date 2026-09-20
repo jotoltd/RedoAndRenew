@@ -377,6 +377,27 @@
 
   loadDelivery();
 
+  /* ---------- Settings ---------- */
+  const settingShowStock = document.getElementById("settingShowStock");
+  const settingsNote = document.getElementById("settingsNote");
+
+  const loadSettings = async () => {
+    const { data } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "show_stock")
+      .maybeSingle();
+    settingShowStock.checked = !data || data.value !== "false";
+  };
+
+  settingShowStock.addEventListener("change", async () => {
+    await supabase.from("settings").upsert({ key: "show_stock", value: String(settingShowStock.checked) });
+    settingsNote.textContent = "Saved ✓";
+    setTimeout(() => (settingsNote.textContent = ""), 1500);
+  });
+
+  loadSettings();
+
   /* ---------- FAQ Editor ---------- */
   const faqEditor = document.getElementById("faqEditor");
   const addFaqBtn = document.getElementById("addFaqBtn");

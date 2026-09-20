@@ -95,6 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ---------- Shop (products loaded from Supabase) ---------- */
   let products = [];
+  let showStockCount = true;
 
   const shopGrid = document.getElementById("shopGrid");
 
@@ -106,6 +107,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     shopGrid.innerHTML = products.map((p) => {
       const soldOut = p.sold || (p.stock != null && p.stock <= 0);
+      const stockLine = showStockCount && !soldOut && p.stock != null
+        ? `<p class="product-card__stock">${p.stock === 1 ? "Only 1 left" : p.stock + " left"}</p>`
+        : "";
       return `
       <article class="product-card reveal" data-id="${p.id}">
         <a class="product-card__media" href="product.html?id=${p.id}">
@@ -115,6 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="product-card__body">
           <h3 class="product-card__title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
           <p class="product-card__desc">${p.description || ""}</p>
+          ${stockLine}
           <div class="product-card__foot">
             <span class="product-card__price">£${Number(p.price).toLocaleString("en-GB")}</span>
             <button class="product-card__btn" data-add="${p.id}" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold" : "Add to Basket"}</button>
@@ -135,10 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
       renderShop();
       return;
     }
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: stockSetting }] = await Promise.all([
+      supabase.from("products").select("*").order("created_at", { ascending: false }),
+      supabase.from("settings").select("value").eq("key", "show_stock").maybeSingle()
+    ]);
+    showStockCount = !stockSetting || stockSetting.value !== "false";
     if (!error && data) {
       products = data;
       // drop stale cart entries that no longer match a real product

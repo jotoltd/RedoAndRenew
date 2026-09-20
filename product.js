@@ -23,16 +23,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (!id || typeof supabase === "undefined") { showMissing(); return; }
 
-  const { data: p, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [{ data: p, error }, { data: stockSetting }] = await Promise.all([
+    supabase.from("products").select("*").eq("id", id).single(),
+    supabase.from("settings").select("value").eq("key", "show_stock").maybeSingle()
+  ]);
 
   if (error || !p) { showMissing(); return; }
 
+  const showStock = !stockSetting || stockSetting.value !== "false";
   const soldOut = p.sold || (p.stock != null && p.stock <= 0);
-  const stockNote = !soldOut && p.stock != null
+  const stockNote = showStock && !soldOut && p.stock != null
     ? (p.stock === 1 ? "Only 1 available — once it's gone, it's gone." : `${p.stock} available`)
     : "";
 
