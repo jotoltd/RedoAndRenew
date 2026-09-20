@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   deliverySelect.addEventListener("change", render);
 
-  // Load products from Supabase, then render the summary
+  // Load products + delivery options from Supabase, then render the summary
   const init = async () => {
     if (typeof supabase !== "undefined") {
       const { data } = await supabase.from("products").select("*");
@@ -68,6 +68,22 @@ document.addEventListener("DOMContentLoaded", () => {
       // drop stale cart entries that no longer match a real product
       cart = cart.filter((i) => products.some((p) => p.id === i.id));
       localStorage.setItem("rn_cart", JSON.stringify(cart));
+
+      const { data: deliv } = await supabase
+        .from("delivery_options")
+        .select("*")
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+      if (deliv && deliv.length > 0) {
+        deliverySelect.innerHTML = "";
+        deliv.forEach((o) => {
+          const opt = document.createElement("option");
+          opt.value = o.price;
+          const price = Number(o.price);
+          opt.textContent = `${o.label} — ${price === 0 ? "Free" : "£" + price.toLocaleString("en-GB")}`;
+          deliverySelect.appendChild(opt);
+        });
+      }
     }
     render();
   };
