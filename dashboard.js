@@ -31,22 +31,24 @@
   /* ---------- Orders ---------- */
   const ordersList = document.getElementById("ordersList");
   const fmt = (n) => "£" + Number(n || 0).toLocaleString("en-GB");
+  let allOrders = [];
+  let orderFilter = "all";
 
-  const loadOrders = async () => {
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false });
+  const updateStats = () => {
+    const statOrders = document.getElementById("statOrders");
+    const statRevenue = document.getElementById("statRevenue");
+    const statNew = document.getElementById("statNewEnquiries");
+    if (statOrders) statOrders.textContent = allOrders.length;
+    if (statRevenue) statRevenue.textContent = fmt(allOrders.reduce((s, o) => s + (Number(o.total) || 0), 0));
+    if (statNew) statNew.textContent = allEnquiries.filter((e) => (e.status || "new") === "new").length;
+  };
 
-    if (error || !data || data.length === 0) {
-      ordersList.innerHTML = `<p class="admin-login__note">${error ? "Error loading orders." : "No orders yet."}</p>`;
-      return;
-    }
+  const renderOrders = () => {
+    const items = orderFilter === "all"
+      ? allOrders
+      : allOrders.filter((o) => (o.status || "new") === orderFilter);
 
-    const countEl = document.getElementById("countOrders");
-    if (countEl) countEl.textContent = data.length || "";
-
-    ordersList.innerHTML = data.map((o) => {
+    ordersList.innerHTML = items.length ? items.map((o) => {
       const date = new Date(o.created_at).toLocaleString("en-GB", {
         day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
       });
@@ -75,10 +77,11 @@
             <button class="enquiry-card__btn" data-order-status="confirmed" data-id="${o.id}">Mark confirmed</button>
             <button class="enquiry-card__btn" data-order-status="completed" data-id="${o.id}">Mark completed</button>
             <button class="enquiry-card__btn" data-order-status="new" data-id="${o.id}">Mark as new</button>
+            <button class="enquiry-card__btn enquiry-card__btn--danger" data-order-delete="${o.id}">Delete</button>
           </div>
         </div>
       `;
-    }).join("");
+    }).join("") : '<p class="admin-login__note">No orders yet.</p>';
 
     ordersList.querySelectorAll("[data-order-status]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -86,7 +89,40 @@
         loadOrders();
       });
     });
+    ordersList.querySelectorAll("[data-order-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Delete this order? This can't be undone.")) return;
+        await supabase.from("orders").delete().eq("id", btn.dataset.orderDelete);
+        loadOrders();
+      });
+    });
   };
+
+  const loadOrders = async () => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      ordersList.innerHTML = '<p class="admin-login__note">Error loading orders.</p>';
+      return;
+    }
+    allOrders = data || [];
+    const countEl = document.getElementById("countOrders");
+    if (countEl) countEl.textContent = allOrders.length || "";
+    updateStats();
+    renderOrders();
+  };
+
+  document.querySelectorAll("[data-order-filter]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-order-filter]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      orderFilter = btn.dataset.orderFilter;
+      renderOrders();
+    });
+  });
 
   loadOrders();
 
@@ -155,6 +191,7 @@
             <button class="enquiry-card__btn" data-status="read" data-id="${e.id}">Mark as read</button>
             <button class="enquiry-card__btn" data-status="replied" data-id="${e.id}">Mark as replied</button>
             <button class="enquiry-card__btn" data-status="new" data-id="${e.id}">Mark as new</button>
+            <button class="enquiry-card__btn enquiry-card__btn--danger" data-del="${e.id}">Delete</button>
           </div>
         </div>
       `;
@@ -175,6 +212,13 @@
         loadEnquiries();
       });
     });
+    enquiriesList.querySelectorAll("[data-del]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Delete this enquiry? This can't be undone.")) return;
+        await supabase.from("enquiries").delete().eq("id", btn.dataset.del);
+        loadEnquiries();
+      });
+    });
   };
 
   const loadEnquiries = async () => {
@@ -191,6 +235,7 @@
     allEnquiries = data;
     const countEl = document.getElementById("countEnquiries");
     if (countEl) countEl.textContent = allEnquiries.length || "";
+    updateStats();
     renderEnquiries();
   };
 
@@ -397,6 +442,24 @@
   });
 
   loadSettings();
+
+  const savePasswordBtn = document.getElementById("savePasswordBtn");
+  const settingPassword = document.getElementById("settingPassword");
+  const passwordNote = document.getElementById("passwordNote");
+
+  savePasswordBtn.addEventListener("click", async () => {
+    const pw = settingPassword.value.trim();
+    if (pw.length < 6) {
+      passwordNote.style.color = "#c0392b";
+      passwordNote.textContent = "Password needs at least 6 characters.";
+      return;
+    }
+    const { error } = await supabase.from("settings").upsert({ key: "admin_password", value: pw });
+    passwordNote.style.color = error ? "#c0392b" : "var(--green)";
+    passwordNote.textContent = error ? "Couldn't save — try again." : "Password updated ✓";
+    if (!error) settingPassword.value = "";
+    setTimeout(() => (passwordNote.textContent = ""), 2000);
+  });
 
   /* ---------- FAQ Editor ---------- */
   const faqEditor = document.getElementById("faqEditor");

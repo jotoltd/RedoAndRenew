@@ -74,6 +74,8 @@
       cursor: pointer; color: var(--green-dark); transition: all 0.25s;
     }
     .enquiry-card__btn:hover { border-color: var(--green); background: var(--green); color: var(--cream); }
+    .enquiry-card__btn--danger { border-color: #c0392b; color: #c0392b; }
+    .enquiry-card__btn--danger:hover { border-color: #c0392b; background: #c0392b; color: var(--white); }
 
     /* FAQ editor */
     .faq-editor__item {
@@ -104,6 +106,15 @@
       font-weight: 600; cursor: pointer; transition: all 0.25s; margin-top: 10px;
     }
     .faq-editor__add:hover { background: var(--green); color: var(--cream); }
+
+    /* Stats row */
+    .dashboard__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 36px; }
+    .stat-card {
+      background: var(--white); border-radius: var(--radius); padding: 22px 24px;
+      box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 2px;
+    }
+    .stat-card__num { font-family: "Fraunces", serif; font-size: 2rem; font-weight: 600; color: var(--green-dark); }
+    .stat-card__label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 
     /* Tab counts + enquiry filter pills */
     .tab-count {
@@ -166,6 +177,12 @@
         </div>
       </div>
 
+      <div class="dashboard__stats">
+        <div class="stat-card"><span class="stat-card__num" id="statOrders">–</span><span class="stat-card__label">Orders</span></div>
+        <div class="stat-card"><span class="stat-card__num" id="statRevenue">–</span><span class="stat-card__label">Revenue</span></div>
+        <div class="stat-card"><span class="stat-card__num" id="statNewEnquiries">–</span><span class="stat-card__label">New enquiries</span></div>
+      </div>
+
       <div class="dashboard__tabs">
         <button class="dashboard__tab active" data-tab="orders">Orders <span class="tab-count" id="countOrders"></span></button>
         <button class="dashboard__tab" data-tab="enquiries">Enquiries <span class="tab-count" id="countEnquiries"></span></button>
@@ -177,6 +194,12 @@
 
       <!-- Orders panel -->
       <div class="dashboard__panel active" data-panel="orders">
+        <div class="enquiry-filters" id="orderFilters">
+          <button class="enquiry-filter active" data-order-filter="all">All</button>
+          <button class="enquiry-filter" data-order-filter="new">New</button>
+          <button class="enquiry-filter" data-order-filter="confirmed">Confirmed</button>
+          <button class="enquiry-filter" data-order-filter="completed">Completed</button>
+        </div>
         <div id="ordersList">
           <p class="admin-login__note">Loading orders…</p>
         </div>
@@ -225,6 +248,11 @@
           <label class="product-item__sold"><input type="checkbox" id="settingShowStock" /> Show stock count on shop &amp; product pages</label>
           <p style="font-size: 0.82rem; color: var(--muted);">When off, sold-out pieces still show a Sold badge — only the "X available" count is hidden.</p>
           <p class="form__note" id="settingsNote" style="text-align:left; margin-top:8px;"></p>
+        </div>
+        <div class="faq-editor__item" style="max-width: 540px;">
+          <label class="editor-field"><span>Admin password</span><input type="password" id="settingPassword" placeholder="Enter new password" autocomplete="new-password" /></label>
+          <button class="faq-editor__btn faq-editor__btn--save" id="savePasswordBtn">Update password</button>
+          <p class="form__note" id="passwordNote" style="text-align:left; margin-top:8px;"></p>
         </div>
       </div>
     </div>
