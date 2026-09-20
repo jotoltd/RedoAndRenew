@@ -121,6 +121,7 @@ Deno.serve(async (req) => {
       total: subtotal + deliveryPrice,
       status: "new",
       paid: false,
+      stripe_mode: mode.toLowerCase(),
     });
     if (oErr) throw oErr;
 

@@ -39,7 +39,7 @@
     const statRevenue = document.getElementById("statRevenue");
     const statNew = document.getElementById("statNewEnquiries");
     if (statOrders) statOrders.textContent = allOrders.length;
-    if (statRevenue) statRevenue.textContent = fmt(allOrders.reduce((s, o) => s + (Number(o.total) || 0), 0));
+    if (statRevenue) statRevenue.textContent = fmt(allOrders.reduce((s, o) => s + (o.paid ? Number(o.total) || 0 : 0), 0));
     if (statNew) statNew.textContent = allEnquiries.filter((e) => (e.status || "new") === "new").length;
   };
 
@@ -80,6 +80,7 @@
             <button class="enquiry-card__btn" data-order-status="confirmed" data-id="${o.id}">Mark confirmed</button>
             <button class="enquiry-card__btn" data-order-status="completed" data-id="${o.id}">Mark completed</button>
             <button class="enquiry-card__btn" data-order-status="new" data-id="${o.id}">Mark as new</button>
+            ${o.paid && o.status !== "refunded" ? `<button class="enquiry-card__btn enquiry-card__btn--danger" data-order-refund="${o.id}">Refund</button>` : ""}
             <button class="enquiry-card__btn enquiry-card__btn--danger" data-order-delete="${o.id}">Delete</button>
           </div>
         </div>
@@ -97,6 +98,34 @@
         if (!confirm("Delete this order? This can't be undone.")) return;
         await supabase.from("orders").delete().eq("id", btn.dataset.orderDelete);
         loadOrders();
+      });
+    });
+    ordersList.querySelectorAll("[data-order-refund]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const order = allOrders.find((x) => String(x.id) === btn.dataset.orderRefund);
+        const pw = prompt(`Refund ${order ? fmt(order.total) : "this order"} to the customer? Enter your admin password to confirm:`);
+        if (pw === null) return;
+        btn.disabled = true;
+        btn.textContent = "Refunding…";
+        try {
+          const res = await fetch(`${SUPABASE_URL}/functions/v1/refund-order`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ order_id: Number(btn.dataset.orderRefund), password: pw }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.ok) {
+            alert(data.error || "Refund failed — try again.");
+            btn.disabled = false;
+            btn.textContent = "Refund";
+            return;
+          }
+          loadOrders();
+        } catch {
+          alert("Refund failed — check the function is deployed.");
+          btn.disabled = false;
+          btn.textContent = "Refund";
+        }
       });
     });
   };
@@ -473,18 +502,32 @@
   const settingPassword = document.getElementById("settingPassword");
   const passwordNote = document.getElementById("passwordNote");
 
+  const settingPasswordCurrent = document.getElementById("settingPasswordCurrent");
+
   savePasswordBtn.addEventListener("click", async () => {
+    const current = settingPasswordCurrent.value;
     const pw = settingPassword.value.trim();
-    if (pw.length < 6) {
+    if (!current || pw.length < 6) {
       passwordNote.style.color = "#c0392b";
-      passwordNote.textContent = "Password needs at least 6 characters.";
+      passwordNote.textContent = "Enter your current password and a new one (6+ characters).";
       return;
     }
-    const { error } = await supabase.from("settings").upsert({ key: "admin_password", value: pw });
-    passwordNote.style.color = error ? "#c0392b" : "var(--green)";
-    passwordNote.textContent = error ? "Couldn't save — try again." : "Password updated ✓";
-    if (!error) settingPassword.value = "";
-    setTimeout(() => (passwordNote.textContent = ""), 2000);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_password", password: current, next: pw }),
+      });
+      const data = await res.json();
+      const ok = res.ok && data.ok;
+      passwordNote.style.color = ok ? "var(--green)" : "#c0392b";
+      passwordNote.textContent = ok ? "Password updated ✓" : (data.error || "Couldn't save — check your current password.");
+      if (ok) { settingPassword.value = ""; settingPasswordCurrent.value = ""; }
+    } catch {
+      passwordNote.style.color = "#c0392b";
+      passwordNote.textContent = "Couldn't save — the admin-auth function isn't deployed yet.";
+    }
+    setTimeout(() => (passwordNote.textContent = ""), 2500);
   });
 
   /* ---------- FAQ Editor ---------- */

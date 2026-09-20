@@ -53,6 +53,7 @@
     .enquiry-card__badge--replied { background: #e9e4f0; color: #6b5b8a; }
     .enquiry-card__badge--confirmed { background: #e4edf5; color: #3a6a8a; }
     .enquiry-card__badge--completed { background: #e8f0e9; color: var(--green-dark); }
+    .enquiry-card__badge--refunded { background: #f5e4e4; color: #a03a3a; }
     .order-card__items { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
     .order-card__item { display: flex; justify-content: space-between; font-size: 0.92rem; color: var(--ink); padding: 4px 0; }
     .order-card__item span:last-child { font-weight: 600; color: var(--green-dark); }
@@ -260,7 +261,8 @@
           <p class="form__note" id="stripeModeNote" style="text-align:left; margin-top:8px;"></p>
         </div>
         <div class="faq-editor__item" style="max-width: 540px;">
-          <label class="editor-field"><span>Admin password</span><input type="password" id="settingPassword" placeholder="Enter new password" autocomplete="new-password" /></label>
+          <label class="editor-field"><span>Current password</span><input type="password" id="settingPasswordCurrent" placeholder="Current password" autocomplete="current-password" /></label>
+          <label class="editor-field"><span>New password</span><input type="password" id="settingPassword" placeholder="Enter new password" autocomplete="new-password" /></label>
           <button class="faq-editor__btn faq-editor__btn--save" id="savePasswordBtn">Update password</button>
           <p class="form__note" id="passwordNote" style="text-align:left; margin-top:8px;"></p>
         </div>

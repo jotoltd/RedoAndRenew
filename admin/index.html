@@ -51,11 +51,22 @@
       note.style.color = "var(--muted)";
       note.textContent = "Logging in…";
 
-      // password can be changed in dashboard Settings; falls back to config
-      const { data: pwRow } = await supabase.from("settings").select("value").eq("key", "admin_password").maybeSingle();
-      const expectedPw = (pwRow && pwRow.value) || ADMIN_PASSWORD;
+      // password is verified server-side; falls back to config if the
+      // admin-auth function isn't deployed yet
+      let ok = false;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-auth`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "verify", password }),
+        });
+        const data = await res.json();
+        ok = !!data.ok;
+      } catch {
+        ok = password === ADMIN_PASSWORD;
+      }
 
-      if (email === ADMIN_EMAIL && password === expectedPw) {
+      if (email === ADMIN_EMAIL && ok) {
         sessionStorage.setItem("rr_admin", "1");
         note.style.color = "var(--green)";
         note.textContent = "Logged in! Redirecting…";

@@ -63,7 +63,11 @@ Deno.serve(async (req) => {
     if (order && !order.paid) {
       await supabase
         .from("orders")
-        .update({ paid: true, status: "confirmed" })
+        .update({
+          paid: true,
+          status: "confirmed",
+          stripe_payment_intent: session.payment_intent as string | null,
+        })
         .eq("id", order.id);
 
       // Decrement stock now that payment is confirmed
@@ -75,6 +79,38 @@ Deno.serve(async (req) => {
           .maybeSingle();
         if (p) {
           const stock = Math.max((p.stock != null ? p.stock : 1) - (item.qty || 1), 0);
+          await supabase
+            .from("products")
+            .update({ stock, sold: stock === 0 })
+            .eq("id", item.id);
+        }
+      }
+    }
+  }
+
+  // Refund issued directly in the Stripe dashboard — sync the order back
+  if (event.type === "charge.refunded") {
+    const charge = event.data.object as Stripe.Charge;
+    const { data: order } = await supabase
+      .from("orders")
+      .select("id,items,status")
+      .eq("stripe_payment_intent", charge.payment_intent as string)
+      .maybeSingle();
+
+    if (order && order.status !== "refunded") {
+      await supabase
+        .from("orders")
+        .update({ status: "refunded", paid: false })
+        .eq("id", order.id);
+
+      for (const item of order.items || []) {
+        const { data: p } = await supabase
+          .from("products")
+          .select("stock")
+          .eq("id", item.id)
+          .maybeSingle();
+        if (p) {
+          const stock = (p.stock != null ? p.stock : 0) + (item.qty || 1);
           await supabase
             .from("products")
             .update({ stock, sold: stock === 0 })
