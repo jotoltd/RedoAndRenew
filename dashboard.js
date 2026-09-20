@@ -46,7 +46,11 @@
   const renderOrders = () => {
     const items = orderFilter === "all"
       ? allOrders
-      : allOrders.filter((o) => (o.status || "new") === orderFilter);
+      : orderFilter === "unpaid"
+        ? allOrders.filter((o) => !o.paid && !["refunded", "cancelled"].includes(o.status || "new"))
+        : orderFilter === "cancelled"
+          ? allOrders.filter((o) => ["refunded", "cancelled"].includes(o.status || ""))
+          : allOrders.filter((o) => (o.status || "new") === orderFilter);
 
     ordersList.innerHTML = items.length ? items.map((o) => {
       const date = new Date(o.created_at).toLocaleString("en-GB", {
@@ -81,6 +85,7 @@
             <button class="enquiry-card__btn" data-order-status="completed" data-id="${o.id}">Mark completed</button>
             <button class="enquiry-card__btn" data-order-status="new" data-id="${o.id}">Mark as new</button>
             ${o.paid && o.status !== "refunded" ? `<button class="enquiry-card__btn enquiry-card__btn--danger" data-order-refund="${o.id}">Refund</button>` : ""}
+            ${!o.paid && !["refunded", "cancelled"].includes(o.status || "new") ? `<button class="enquiry-card__btn" data-order-cancel="${o.id}">Cancel</button>` : ""}
             <button class="enquiry-card__btn enquiry-card__btn--danger" data-order-delete="${o.id}">Delete</button>
           </div>
         </div>
@@ -128,7 +133,32 @@
         }
       });
     });
+    ordersList.querySelectorAll("[data-order-cancel]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Cancel this unpaid order?")) return;
+        await supabase.from("orders").update({ status: "cancelled" }).eq("id", btn.dataset.orderCancel);
+        loadOrders();
+      });
+    });
   };
+
+  const exportBtn = document.getElementById("exportOrdersBtn");
+  if (exportBtn) {
+    exportBtn.addEventListener("click", () => {
+      const rows = [["Ref", "Date", "Name", "Email", "Phone", "Address", "Delivery", "Items", "Subtotal", "Delivery £", "Total", "Paid", "Status"]];
+      allOrders.forEach((o) => {
+        const address = [o.address1, o.address2, o.town, o.postcode].filter(Boolean).join(", ");
+        const itemList = (Array.isArray(o.items) ? o.items : []).map((i) => `${i.name || "Item"} x${i.qty || 1}`).join("; ");
+        rows.push([o.ref, new Date(o.created_at).toLocaleString("en-GB"), o.name, o.email, o.phone || "", address, o.delivery_method || "", itemList, o.subtotal, o.delivery_price, o.total, o.paid ? "Yes" : "No", o.status || "new"]);
+      });
+      const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+      a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
 
   const loadOrders = async () => {
     const { data, error } = await supabase
@@ -286,12 +316,38 @@
   const productsList = document.getElementById("productsList");
   const addProductBtn = document.getElementById("addProductBtn");
   let productItems = [];
+  const galleryMap = {}; // product id -> working array of image URLs
+
+  const renderGallery = (row, id) => {
+    const box = row.querySelector(`[data-gallery="${id}"]`);
+    if (!box) return;
+    const imgs = galleryMap[id] || [];
+    box.innerHTML = imgs.length
+      ? imgs.map((u, i) => `
+          <div class="product-photos__item">
+            <img src="${esc(u)}" alt="" />
+            <button type="button" data-remove-img="${id}|${i}" aria-label="Remove photo">&times;</button>
+          </div>`).join("")
+      : '<span class="admin-login__note">No photos yet.</span>';
+    box.querySelectorAll("[data-remove-img]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const [pid, idx] = b.dataset.removeImg.split("|");
+        galleryMap[pid].splice(Number(idx), 1);
+        renderGallery(row, pid);
+      });
+    });
+  };
 
   const renderProducts = () => {
     if (productItems.length === 0) {
       productsList.innerHTML = '<p class="admin-login__note">No products yet — add your first piece below.</p>';
       return;
     }
+    productItems.forEach((p) => {
+      galleryMap[p.id] = (Array.isArray(p.images) && p.images.length
+        ? p.images
+        : (p.image_url ? [p.image_url] : [])).slice();
+    });
     productsList.innerHTML = productItems.map((p) => `
       <div class="faq-editor__item" data-id="${p.id}">
         <div class="product-item__row">
@@ -306,8 +362,16 @@
           <label class="editor-field"><span>Badge (optional)</span><input type="text" value="${esc(p.tag || "")}" placeholder="e.g. New, One of a kind" data-field="tag" /></label>
           <label class="editor-field"><span>Stock (0 = sold)</span><input type="number" value="${p.stock ?? 1}" data-field="stock" min="0" step="1" /></label>
         </div>
-        <label class="editor-field"><span>Image URL</span><input type="text" value="${esc(p.image_url || "")}" placeholder="Or upload below" data-field="image_url" /></label>
-        <label class="editor-field"><span>Upload image</span><input type="file" accept="image/*" data-field="image_file" /></label>
+        <div class="editor-field"><span>Photos (first one is the cover)</span>
+          <div class="product-photos" data-gallery="${p.id}"></div>
+          <div class="product-item__grid" style="margin-top:8px;">
+            <input type="file" accept="image/*" multiple data-field="image_files" />
+            <div style="display:flex;gap:8px;">
+              <input type="text" placeholder="Paste image URL" data-field="image_url" />
+              <button type="button" class="enquiry-card__btn" data-add-url="${p.id}">Add</button>
+            </div>
+          </div>
+        </div>
         <div class="faq-editor__actions">
           <button class="faq-editor__btn faq-editor__btn--save" data-save="${p.id}">Save</button>
           <button class="faq-editor__btn faq-editor__btn--delete" data-delete="${p.id}">Delete</button>
@@ -315,31 +379,50 @@
       </div>
     `).join("");
 
+    productsList.querySelectorAll(".faq-editor__item").forEach((row) => renderGallery(row, row.dataset.id));
+
+    productsList.querySelectorAll("[data-add-url]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const row = btn.closest(".faq-editor__item");
+        const input = row.querySelector('[data-field="image_url"]');
+        const url = input.value.trim();
+        if (!url) return;
+        galleryMap[btn.dataset.addUrl].push(url);
+        input.value = "";
+        renderGallery(row, btn.dataset.addUrl);
+      });
+    });
+
     productsList.querySelectorAll("[data-save]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = btn.dataset.save;
         const row = btn.closest(".faq-editor__item");
         const val = (f) => row.querySelector(`[data-field="${f}"]`).value.trim();
-        const fileInput = row.querySelector('[data-field="image_file"]');
+        const fileInput = row.querySelector('[data-field="image_files"]');
 
-        let imageUrl = val("image_url");
+        // Upload any newly picked files, then they join the gallery
         if (fileInput.files && fileInput.files.length > 0) {
-          const file = fileInput.files[0];
-          const path = `${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
-          const { error: upErr } = await supabase.storage.from("product-images").upload(path, file);
-          if (!upErr) {
-            const { data: pub } = supabase.storage.from("product-images").getPublicUrl(path);
-            if (pub && pub.publicUrl) imageUrl = pub.publicUrl;
+          btn.textContent = "Uploading…";
+          for (const file of fileInput.files) {
+            const path = `${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
+            const { error: upErr } = await supabase.storage.from("product-images").upload(path, file);
+            if (!upErr) {
+              const { data: pub } = supabase.storage.from("product-images").getPublicUrl(path);
+              if (pub && pub.publicUrl) galleryMap[id].push(pub.publicUrl);
+            }
           }
+          btn.textContent = "Save";
         }
 
+        const images = galleryMap[id] || [];
         const stock = Number(val("stock")) || 0;
         const updates = {
           name: val("name"),
           price: Number(val("price")) || 0,
           description: val("description"),
           tag: val("tag") || null,
-          image_url: imageUrl || null,
+          images,
+          image_url: images[0] || null,
           stock,
           sold: stock <= 0
         };

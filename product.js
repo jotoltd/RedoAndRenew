@@ -38,10 +38,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.title = `${p.name} — Redo & Renew by Charline`;
 
+  const gallery = (Array.isArray(p.images) && p.images.length
+    ? p.images
+    : (p.image_url ? [p.image_url] : [])).filter(Boolean);
+
   root.innerHTML = `
     <div class="product-page__media">
-      ${p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" />` : ""}
+      ${gallery.length ? `<img id="productMainImg" src="${esc(gallery[0])}" alt="${esc(p.name)}" />` : ""}
       ${soldOut ? '<span class="product-card__badge product-card__badge--sold">Sold</span>' : p.tag ? `<span class="product-card__badge">${esc(p.tag)}</span>` : ""}
+      ${gallery.length > 1 ? `
+        <div class="product-page__thumbs">
+          ${gallery.map((u, i) => `<img src="${esc(u)}" alt="" class="${i === 0 ? "active" : ""}" data-thumb="${i}" />`).join("")}
+        </div>` : ""}
     </div>
     <div class="product-page__info">
       <span class="eyebrow">One of a kind</span>
@@ -56,6 +64,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       <p class="product-page__note">♻️ Every purchase keeps solid furniture out of landfill. Local delivery available across Melton Mowbray &amp; surrounding areas.</p>
     </div>
   `;
+
+  root.querySelectorAll("[data-thumb]").forEach((thumb) => {
+    thumb.addEventListener("click", () => {
+      const main = document.getElementById("productMainImg");
+      if (main) main.src = gallery[Number(thumb.dataset.thumb)];
+      root.querySelectorAll("[data-thumb]").forEach((t) => t.classList.remove("active"));
+      thumb.classList.add("active");
+    });
+  });
 
   const addBtn = document.getElementById("productAdd");
   if (addBtn && !soldOut) {
