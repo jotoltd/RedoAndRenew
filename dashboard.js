@@ -66,7 +66,10 @@
               ${o.delivery_method ? `<div class="enquiry-card__meta">🚚 ${esc(o.delivery_method)}</div>` : ""}
               ${o.notes ? `<div class="enquiry-card__meta">📝 ${esc(o.notes)}</div>` : ""}
             </div>
-            <span class="enquiry-card__badge enquiry-card__badge--${o.status || "new"}">${o.status || "new"}</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="enquiry-card__badge enquiry-card__badge--${o.status || "new"}">${o.status || "new"}</span>
+              <span class="enquiry-card__badge ${o.paid ? "enquiry-card__badge--completed" : "enquiry-card__badge--read"}">${o.paid ? "Paid" : "Unpaid"}</span>
+            </div>
           </div>
           <div class="order-card__items">
             ${items.map((i) => `<div class="order-card__item"><span>${esc(i.name || "Item")} × ${Number(i.qty) || 1}</span><span>${fmt((Number(i.price) || 0) * (Number(i.qty) || 1))}</span></div>`).join("")}

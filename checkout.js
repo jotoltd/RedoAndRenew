@@ -78,6 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
         deliv.forEach((o) => {
           const opt = document.createElement("option");
           opt.value = o.price;
+          opt.dataset.id = o.id;
           const price = Number(o.price);
           opt.textContent = `${o.label} — ${price === 0 ? "Free" : "£" + price.toLocaleString("en-GB")}`;
           deliverySelect.appendChild(opt);
@@ -94,28 +95,26 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   init();
 
-  /* ---------- Card input formatting ---------- */
-  const cCard = document.getElementById("cCard");
-  cCard.addEventListener("input", () => {
-    let v = cCard.value.replace(/\D/g, "").slice(0, 16);
-    v = v.replace(/(.{4})/g, "$1 ").trim();
-    cCard.value = v;
-  });
-  const cExp = document.getElementById("cExp");
-  cExp.addEventListener("input", () => {
-    let v = cExp.value.replace(/\D/g, "").slice(0, 4);
-    if (v.length >= 3) v = v.slice(0, 2) + " / " + v.slice(2);
-    cExp.value = v;
-  });
-  const cCvc = document.getElementById("cCvc");
-  cCvc.addEventListener("input", () => {
-    cCvc.value = cCvc.value.replace(/\D/g, "").slice(0, 4);
-  });
-
-  /* ---------- Place order ---------- */
+  /* ---------- Place order → Stripe Checkout ---------- */
   const placeBtn = document.getElementById("placeOrder");
   const success = document.getElementById("success");
   const orderRef = document.getElementById("orderRef");
+
+  // Returning from Stripe
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("paid") === "1") {
+    orderRef.textContent = params.get("ref") || "";
+    cart = [];
+    localStorage.setItem("rn_cart", "[]");
+    success.classList.add("open");
+    success.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    window.history.replaceState({}, "", "checkout/");
+  } else if (params.get("cancelled") === "1") {
+    const note = document.getElementById("cancelledNote");
+    if (note) note.hidden = false;
+    window.history.replaceState({}, "", "checkout/");
+  }
 
   placeBtn.addEventListener("click", async () => {
     if (cart.length === 0) return;
@@ -133,68 +132,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const val = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
-    const subtotal = cart.reduce((s, i) => {
-      const p = products.find((x) => x.id === i.id);
-      return p ? s + p.price * i.qty : s;
-    }, 0);
-    const delivery = Number(deliverySelect.value) || 0;
+    const selectedOpt = deliverySelect.options[deliverySelect.selectedIndex];
 
-    // generate order ref
-    const ref = "RR-" + Date.now().toString(36).toUpperCase().slice(-6);
+    placeBtn.disabled = true;
+    placeBtn.textContent = "Redirecting to secure payment…";
 
-    // save the order to Supabase
-    if (typeof supabase !== "undefined") {
-      placeBtn.disabled = true;
-      placeBtn.textContent = "Placing order…";
-
-      const order = {
-        ref,
-        name: val("cName"),
-        email: val("cEmail"),
-        phone: val("cPhone"),
-        address1: val("cAddr1"),
-        address2: val("cAddr2"),
-        town: val("cTown"),
-        postcode: val("cPostcode"),
-        delivery_method: deliverySelect.options[deliverySelect.selectedIndex]?.text || "",
-        notes: val("cNotes"),
-        items: cart.map((i) => {
-          const p = products.find((x) => x.id === i.id);
-          return { id: i.id, name: p ? p.name : "Item", price: p ? p.price : 0, qty: i.qty };
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: val("cName"),
+          email: val("cEmail"),
+          phone: val("cPhone"),
+          address1: val("cAddr1"),
+          address2: val("cAddr2"),
+          town: val("cTown"),
+          postcode: val("cPostcode"),
+          notes: val("cNotes"),
+          delivery_option_id: selectedOpt ? selectedOpt.dataset.id : null,
+          items: cart.map((i) => ({ id: i.id, qty: i.qty })),
         }),
-        subtotal,
-        delivery_price: delivery,
-        total: subtotal + delivery,
-        status: "new"
-      };
-
-      const { error } = await supabase.from("orders").insert([order]);
-      if (error) {
-        placeBtn.disabled = false;
-        placeBtn.textContent = "Something went wrong — please try again";
-        return;
-      }
-
-      // decrement stock; item shows as Sold when it hits 0
-      await Promise.all(
-        cart.map(async (i) => {
-          const p = products.find((x) => x.id === i.id);
-          if (!p) return;
-          const newStock = Math.max((p.stock != null ? p.stock : 1) - i.qty, 0);
-          await supabase.from("products").update({ stock: newStock, sold: newStock === 0 }).eq("id", i.id);
-        })
-      );
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "Checkout failed");
+      window.location.href = data.url;
+    } catch (e) {
+      placeBtn.disabled = false;
+      placeBtn.textContent = "Something went wrong — please try again";
     }
-
-    orderRef.textContent = ref;
-
-    // clear cart
-    cart = [];
-    localStorage.setItem("rn_cart", "[]");
-
-    // show success
-    success.classList.add("open");
-    success.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
   });
 });
