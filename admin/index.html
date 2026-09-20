@@ -59,7 +59,7 @@
         sessionStorage.setItem("rr_admin", "1");
         note.style.color = "var(--green)";
         note.textContent = "Logged in! Redirecting…";
-        window.location.href = "../dashboard.html";
+        window.location.href = "../dashboard/";
         return;
       }
 
@@ -69,7 +69,7 @@
 
     // Redirect if already logged in
     if (sessionStorage.getItem("rr_admin") === "1") {
-      window.location.href = "../dashboard.html";
+      window.location.href = "../dashboard/";
     }
   </script>
 </body>

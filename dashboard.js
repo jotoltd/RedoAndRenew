@@ -4,7 +4,7 @@
 
 (async () => {
   if (sessionStorage.getItem("rr_admin") !== "1") {
-    window.location.href = "admin/";
+    window.location.href = "../admin/";
     return;
   }
 
@@ -23,7 +23,7 @@
   /* ---------- Logout ---------- */
   document.getElementById("logoutBtn").addEventListener("click", () => {
     sessionStorage.removeItem("rr_admin");
-    window.location.href = "admin/";
+    window.location.href = "../admin/";
   });
 
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
