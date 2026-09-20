@@ -104,22 +104,24 @@ document.addEventListener("DOMContentLoaded", () => {
       shopGrid.innerHTML = '<p class="shop__empty reveal in">No pieces available right now — new ones are added regularly. <a href="#contact">Ask about a commission →</a></p>';
       return;
     }
-    shopGrid.innerHTML = products.map((p) => `
+    shopGrid.innerHTML = products.map((p) => {
+      const soldOut = p.sold || (p.stock != null && p.stock <= 0);
+      return `
       <article class="product-card reveal" data-id="${p.id}">
         <a class="product-card__media" href="product.html?id=${p.id}">
           <img src="${p.image_url}" alt="${p.name}" loading="lazy" />
-          ${p.sold ? '<span class="product-card__badge product-card__badge--sold">Sold</span>' : p.tag ? `<span class="product-card__badge">${p.tag}</span>` : ""}
+          ${soldOut ? '<span class="product-card__badge product-card__badge--sold">Sold</span>' : p.tag ? `<span class="product-card__badge">${p.tag}</span>` : ""}
         </a>
         <div class="product-card__body">
           <h3 class="product-card__title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
           <p class="product-card__desc">${p.description || ""}</p>
           <div class="product-card__foot">
             <span class="product-card__price">£${Number(p.price).toLocaleString("en-GB")}</span>
-            <button class="product-card__btn" data-add="${p.id}" ${p.sold ? "disabled" : ""}>${p.sold ? "Sold" : "Add to Basket"}</button>
+            <button class="product-card__btn" data-add="${p.id}" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold" : "Add to Basket"}</button>
           </div>
         </div>
       </article>
-    `).join("");
+    `}).join("");
     // re-observe newly added reveal cards
     shopGrid.querySelectorAll(".reveal").forEach((el) => {
       if ("IntersectionObserver" in window) io.observe(el);
@@ -215,8 +217,11 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const addToCart = (id) => {
+    const prod = products.find((x) => x.id === id);
+    if (!prod || prod.sold || (prod.stock != null && prod.stock <= 0)) return;
+    const maxQty = prod.stock != null ? prod.stock : Infinity;
     const existing = cart.find((i) => i.id === id);
-    if (existing) existing.qty++;
+    if (existing) existing.qty = Math.min(existing.qty + 1, maxQty);
     else cart.push({ id, qty: 1 });
     renderCart();
     openCart();
@@ -224,7 +229,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const changeQty = (id, delta) => {
     const item = cart.find((i) => i.id === id);
     if (!item) return;
-    item.qty += delta;
+    const prod = products.find((x) => x.id === id);
+    const maxQty = prod && prod.stock != null ? prod.stock : Infinity;
+    item.qty = Math.min(item.qty + delta, maxQty);
     if (item.qty <= 0) cart = cart.filter((i) => i.id !== id);
     renderCart();
   };

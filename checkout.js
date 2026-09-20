@@ -170,9 +170,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // mark purchased pieces as sold
+      // decrement stock; item shows as Sold when it hits 0
       await Promise.all(
-        cart.map((i) => supabase.from("products").update({ sold: true }).eq("id", i.id))
+        cart.map(async (i) => {
+          const p = products.find((x) => x.id === i.id);
+          if (!p) return;
+          const newStock = Math.max((p.stock != null ? p.stock : 1) - i.qty, 0);
+          await supabase.from("products").update({ stock: newStock, sold: newStock === 0 }).eq("id", i.id);
+        })
       );
     }
 

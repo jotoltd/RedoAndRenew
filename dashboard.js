@@ -213,7 +213,7 @@
         <input type="text" value="${esc(p.tag || "")}" placeholder="Badge (optional — e.g. New, One of a kind)" data-field="tag" />
         <input type="text" value="${esc(p.image_url || "")}" placeholder="Image URL (or upload below)" data-field="image_url" />
         <input type="file" accept="image/*" data-field="image_file" />
-        <label class="product-item__sold"><input type="checkbox" data-field="sold" ${p.sold ? "checked" : ""} /> Sold</label>
+        <input type="number" value="${p.stock ?? 1}" placeholder="Stock (0 = sold)" data-field="stock" min="0" step="1" />
         <div class="faq-editor__actions">
           <button class="faq-editor__btn faq-editor__btn--save" data-save="${p.id}">Save</button>
           <button class="faq-editor__btn faq-editor__btn--delete" data-delete="${p.id}">Delete</button>
@@ -239,13 +239,15 @@
           }
         }
 
+        const stock = Number(val("stock")) || 0;
         const updates = {
           name: val("name"),
           price: Number(val("price")) || 0,
           description: val("description"),
           tag: val("tag") || null,
           image_url: imageUrl || null,
-          sold: row.querySelector('[data-field="sold"]').checked
+          stock,
+          sold: stock <= 0
         };
         if (!updates.name) return;
         await supabase.from("products").update(updates).eq("id", id);
