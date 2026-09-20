@@ -67,7 +67,7 @@
             <span class="enquiry-card__badge enquiry-card__badge--${o.status || "new"}">${o.status || "new"}</span>
           </div>
           <div class="order-card__items">
-            ${items.map((i) => `<div class="order-card__item"><span>${esc(i.name)} × ${i.qty}</span><span>${fmt(i.price * i.qty)}</span></div>`).join("")}
+            ${items.map((i) => `<div class="order-card__item"><span>${esc(i.name || "Item")} × ${Number(i.qty) || 1}</span><span>${fmt((Number(i.price) || 0) * (Number(i.qty) || 1))}</span></div>`).join("")}
             <div class="order-card__item"><span>Delivery</span><span>${Number(o.delivery_price) === 0 ? "Free" : fmt(o.delivery_price)}</span></div>
             <div class="order-card__total"><span>Total</span><span>${fmt(o.total)}</span></div>
           </div>
