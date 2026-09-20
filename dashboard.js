@@ -446,6 +446,29 @@
 
   loadSettings();
 
+  const settingStripeMode = document.getElementById("settingStripeMode");
+  const stripeModeNote = document.getElementById("stripeModeNote");
+
+  const loadStripeMode = async () => {
+    const { data } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "stripe_mode")
+      .maybeSingle();
+    settingStripeMode.value = data && data.value === "live" ? "live" : "test";
+  };
+
+  settingStripeMode.addEventListener("change", async () => {
+    await supabase.from("settings").upsert({ key: "stripe_mode", value: settingStripeMode.value });
+    stripeModeNote.style.color = "var(--green)";
+    stripeModeNote.textContent = settingStripeMode.value === "live"
+      ? "Live mode — real payments will be taken."
+      : "Sandbox mode — test payments only.";
+    setTimeout(() => (stripeModeNote.textContent = ""), 2500);
+  });
+
+  loadStripeMode();
+
   const savePasswordBtn = document.getElementById("savePasswordBtn");
   const settingPassword = document.getElementById("settingPassword");
   const passwordNote = document.getElementById("passwordNote");

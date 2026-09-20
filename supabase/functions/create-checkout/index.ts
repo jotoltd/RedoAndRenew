@@ -1,10 +1,6 @@
 import Stripe from "https://esm.sh/stripe@14.25.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
-  apiVersion: "2024-06-20",
-});
-
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY")!,
@@ -30,6 +26,20 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const items = Array.isArray(body.items) ? body.items : [];
     if (items.length === 0) return json({ error: "Basket is empty" }, 400);
+
+    // Payment mode is toggled in the dashboard Settings (settings.stripe_mode)
+    const { data: modeRow } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "stripe_mode")
+      .maybeSingle();
+    const mode = modeRow && modeRow.value === "live" ? "LIVE" : "TEST";
+    const stripeKey =
+      Deno.env.get(`STRIPE_SECRET_KEY_${mode}`) ?? Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      return json({ error: `Stripe ${mode.toLowerCase()} key is not configured` }, 500);
+    }
+    const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
 
     // Look up real products + prices server-side — never trust client prices
     const ids = items.map((i: { id: number }) => i.id);

@@ -1,9 +1,13 @@
 import Stripe from "https://esm.sh/stripe@14.25.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
-  apiVersion: "2024-06-20",
-});
+const stripe = new Stripe(
+  Deno.env.get("STRIPE_SECRET_KEY_LIVE") ??
+    Deno.env.get("STRIPE_SECRET_KEY_TEST") ??
+    Deno.env.get("STRIPE_SECRET_KEY") ??
+    "sk_placeholder",
+  { apiVersion: "2024-06-20" },
+);
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -16,26 +20,35 @@ Deno.serve(async (req) => {
   }
 
   const signature = req.headers.get("stripe-signature");
-  const secret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-  if (!signature || !secret) {
+  const secrets = [
+    Deno.env.get("STRIPE_WEBHOOK_SECRET_LIVE"),
+    Deno.env.get("STRIPE_WEBHOOK_SECRET_TEST"),
+    Deno.env.get("STRIPE_WEBHOOK_SECRET"),
+  ].filter((s): s is string => Boolean(s));
+  if (!signature || secrets.length === 0) {
     return new Response("Missing signature or webhook secret", { status: 400 });
   }
 
-  let event: Stripe.Event;
-  try {
-    const rawBody = await req.text();
-    event = await stripe.webhooks.constructEventAsync(
-      rawBody,
-      signature,
-      secret,
-      undefined,
-      Stripe.createSubtleCryptoProvider(),
-    );
-  } catch (e) {
-    return new Response(
-      `Webhook signature failed: ${e instanceof Error ? e.message : e}`,
-      { status: 400 },
-    );
+  const rawBody = await req.text();
+
+  // Try each configured secret — live and test webhooks can share this endpoint
+  let event: Stripe.Event | null = null;
+  for (const secret of secrets) {
+    try {
+      event = await stripe.webhooks.constructEventAsync(
+        rawBody,
+        signature,
+        secret,
+        undefined,
+        Stripe.createSubtleCryptoProvider(),
+      );
+      break;
+    } catch {
+      // signature didn't match this secret — try the next
+    }
+  }
+  if (!event) {
+    return new Response("Webhook signature verification failed", { status: 400 });
   }
 
   if (event.type === "checkout.session.completed") {

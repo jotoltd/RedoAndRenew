@@ -250,6 +250,16 @@
           <p class="form__note" id="settingsNote" style="text-align:left; margin-top:8px;"></p>
         </div>
         <div class="faq-editor__item" style="max-width: 540px;">
+          <label class="editor-field"><span>Payment mode</span>
+            <select id="settingStripeMode">
+              <option value="test">Sandbox — test payments</option>
+              <option value="live">Live — real payments</option>
+            </select>
+          </label>
+          <p style="font-size: 0.82rem; color: var(--muted);">Sandbox uses Stripe's test keys — no real money moves. Switch to Live once the live key and webhook are set in Supabase.</p>
+          <p class="form__note" id="stripeModeNote" style="text-align:left; margin-top:8px;"></p>
+        </div>
+        <div class="faq-editor__item" style="max-width: 540px;">
           <label class="editor-field"><span>Admin password</span><input type="password" id="settingPassword" placeholder="Enter new password" autocomplete="new-password" /></label>
           <button class="faq-editor__btn faq-editor__btn--save" id="savePasswordBtn">Update password</button>
           <p class="form__note" id="passwordNote" style="text-align:left; margin-top:8px;"></p>
