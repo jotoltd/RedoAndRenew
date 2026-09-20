@@ -18,7 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const sumTotal = document.getElementById("sumTotal");
   const placeTotal = document.getElementById("placeTotal");
   const deliverySelect = document.getElementById("cDelivery");
-
   const render = () => {
     if (cart.length === 0) {
       summaryItems.innerHTML = `<div class="summary__empty">Your basket is empty.<br /><a href="index.html#shop">Browse the shop →</a></div>`;
@@ -84,6 +83,12 @@ document.addEventListener("DOMContentLoaded", () => {
           deliverySelect.appendChild(opt);
         });
       }
+    }
+    if (deliverySelect.options.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = 0;
+      opt.textContent = "Delivery — Free";
+      deliverySelect.appendChild(opt);
     }
     render();
   };

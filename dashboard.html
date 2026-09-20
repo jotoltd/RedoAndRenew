@@ -105,6 +105,23 @@
     }
     .faq-editor__add:hover { background: var(--green); color: var(--cream); }
 
+    /* Tab counts + enquiry filter pills */
+    .tab-count {
+      display: inline-block; background: var(--accent); color: var(--white);
+      font-size: 0.72rem; font-weight: 700; min-width: 20px; height: 20px;
+      line-height: 20px; border-radius: 50%; text-align: center;
+      padding: 0 5px; margin-left: 6px; vertical-align: 2px;
+    }
+    .tab-count:empty { display: none; }
+    .enquiry-filters { display: flex; gap: 8px; margin-bottom: 26px; flex-wrap: wrap; }
+    .enquiry-filter {
+      padding: 8px 18px; border-radius: 100px; border: 1.5px solid var(--line);
+      background: var(--white); font-family: inherit; font-size: 0.85rem; font-weight: 600;
+      color: var(--muted); cursor: pointer; transition: all 0.25s;
+    }
+    .enquiry-filter:hover { border-color: var(--green); color: var(--green-dark); }
+    .enquiry-filter.active { background: var(--green); border-color: var(--green); color: var(--cream); }
+
     /* Products editor */
     .product-item__row { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 10px; }
     .product-item__img {
@@ -114,6 +131,13 @@
     .product-item__fields { flex: 1; min-width: 0; }
     .product-item__sold { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: 600; color: var(--green-dark); margin-bottom: 10px; }
     .product-item__sold input { width: auto; margin: 0; }
+    .product-item__grid { display: grid; grid-template-columns: 1fr 120px; gap: 10px; }
+    .editor-field { display: block; margin-bottom: 10px; }
+    .editor-field > span {
+      display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--muted); margin-bottom: 4px;
+    }
+    .editor-field input, .editor-field textarea { margin-bottom: 0 !important; }
 
     .admin-login__note { text-align: center; padding: 60px; color: var(--muted); }
 
@@ -143,10 +167,8 @@
       </div>
 
       <div class="dashboard__tabs">
-        <button class="dashboard__tab active" data-tab="orders">Orders</button>
-        <button class="dashboard__tab" data-tab="renew">Renewals</button>
-        <button class="dashboard__tab" data-tab="source">Sourcing</button>
-        <button class="dashboard__tab" data-tab="other">Other</button>
+        <button class="dashboard__tab active" data-tab="orders">Orders <span class="tab-count" id="countOrders"></span></button>
+        <button class="dashboard__tab" data-tab="enquiries">Enquiries <span class="tab-count" id="countEnquiries"></span></button>
         <button class="dashboard__tab" data-tab="products">Products</button>
         <button class="dashboard__tab" data-tab="delivery">Delivery</button>
         <button class="dashboard__tab" data-tab="faq">FAQ Editor</button>
@@ -159,19 +181,15 @@
         </div>
       </div>
 
-      <!-- Enquiries panels -->
-      <div class="dashboard__panel" data-panel="renew">
-        <div id="enquiriesRenew">
-          <p class="admin-login__note">Loading enquiries…</p>
+      <!-- Enquiries panel -->
+      <div class="dashboard__panel" data-panel="enquiries">
+        <div class="enquiry-filters" id="enquiryFilters">
+          <button class="enquiry-filter active" data-filter="all">All</button>
+          <button class="enquiry-filter" data-filter="renew">Renewals</button>
+          <button class="enquiry-filter" data-filter="source">Sourcing</button>
+          <button class="enquiry-filter" data-filter="other">Other</button>
         </div>
-      </div>
-      <div class="dashboard__panel" data-panel="source">
-        <div id="enquiriesSource">
-          <p class="admin-login__note">Loading enquiries…</p>
-        </div>
-      </div>
-      <div class="dashboard__panel" data-panel="other">
-        <div id="enquiriesOther">
+        <div id="enquiriesList">
           <p class="admin-login__note">Loading enquiries…</p>
         </div>
       </div>

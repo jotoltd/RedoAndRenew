@@ -43,6 +43,9 @@
       return;
     }
 
+    const countEl = document.getElementById("countOrders");
+    if (countEl) countEl.textContent = data.length || "";
+
     ordersList.innerHTML = data.map((o) => {
       const date = new Date(o.created_at).toLocaleString("en-GB", {
         day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
@@ -88,11 +91,9 @@
   loadOrders();
 
   /* ---------- Enquiries ---------- */
-  const enquiryLists = {
-    renew: document.getElementById("enquiriesRenew"),
-    source: document.getElementById("enquiriesSource"),
-    other: document.getElementById("enquiriesOther")
-  };
+  const enquiriesList = document.getElementById("enquiriesList");
+  let enquiryFilter = "all";
+  let allEnquiries = [];
   const typeLabels = {
     renew: "Renewing a piece",
     source: "Sourcing request",
@@ -159,6 +160,23 @@
       `;
   };
 
+  const renderEnquiries = () => {
+    const items = enquiryFilter === "all"
+      ? allEnquiries
+      : allEnquiries.filter((e) => e.enquiry_type === enquiryFilter);
+
+    enquiriesList.innerHTML = items.length
+      ? items.map(enquiryCard).join("")
+      : '<p class="admin-login__note">No enquiries yet.</p>';
+
+    enquiriesList.querySelectorAll("[data-status]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await supabase.from("enquiries").update({ status: btn.dataset.status }).eq("id", btn.dataset.id);
+        loadEnquiries();
+      });
+    });
+  };
+
   const loadEnquiries = async () => {
     const { data, error } = await supabase
       .from("enquiries")
@@ -166,27 +184,24 @@
       .order("created_at", { ascending: false });
 
     if (error || !data || data.length === 0) {
-      const msg = error ? "Error loading enquiries." : "No enquiries yet.";
-      Object.values(enquiryLists).forEach((el) => {
-        el.innerHTML = `<p class="admin-login__note">${msg}</p>`;
-      });
+      enquiriesList.innerHTML = `<p class="admin-login__note">${error ? "Error loading enquiries." : "No enquiries yet."}</p>`;
       return;
     }
 
-    Object.entries(enquiryLists).forEach(([type, el]) => {
-      const items = data.filter((e) => e.enquiry_type === type);
-      el.innerHTML = items.length
-        ? items.map(enquiryCard).join("")
-        : '<p class="admin-login__note">No enquiries yet.</p>';
-
-      el.querySelectorAll("[data-status]").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          await supabase.from("enquiries").update({ status: btn.dataset.status }).eq("id", btn.dataset.id);
-          loadEnquiries();
-        });
-      });
-    });
+    allEnquiries = data;
+    const countEl = document.getElementById("countEnquiries");
+    if (countEl) countEl.textContent = allEnquiries.length || "";
+    renderEnquiries();
   };
+
+  document.querySelectorAll(".enquiry-filter").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".enquiry-filter").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      enquiryFilter = btn.dataset.filter;
+      renderEnquiries();
+    });
+  });
 
   loadEnquiries();
 
@@ -205,15 +220,17 @@
         <div class="product-item__row">
           ${p.image_url ? `<img class="product-item__img" src="${esc(p.image_url)}" alt="" />` : '<div class="product-item__img"></div>'}
           <div class="product-item__fields">
-            <input type="text" value="${esc(p.name)}" placeholder="Name" data-field="name" />
-            <input type="number" value="${p.price}" placeholder="Price (£)" data-field="price" min="0" step="1" />
+            <label class="editor-field"><span>Name</span><input type="text" value="${esc(p.name)}" data-field="name" /></label>
+            <label class="editor-field"><span>Price (£)</span><input type="number" value="${p.price}" data-field="price" min="0" step="1" /></label>
           </div>
         </div>
-        <textarea placeholder="Description" data-field="description">${esc(p.description || "")}</textarea>
-        <input type="text" value="${esc(p.tag || "")}" placeholder="Badge (optional — e.g. New, One of a kind)" data-field="tag" />
-        <input type="text" value="${esc(p.image_url || "")}" placeholder="Image URL (or upload below)" data-field="image_url" />
-        <input type="file" accept="image/*" data-field="image_file" />
-        <input type="number" value="${p.stock ?? 1}" placeholder="Stock (0 = sold)" data-field="stock" min="0" step="1" />
+        <label class="editor-field"><span>Description</span><textarea data-field="description">${esc(p.description || "")}</textarea></label>
+        <div class="product-item__grid">
+          <label class="editor-field"><span>Badge (optional)</span><input type="text" value="${esc(p.tag || "")}" placeholder="e.g. New, One of a kind" data-field="tag" /></label>
+          <label class="editor-field"><span>Stock (0 = sold)</span><input type="number" value="${p.stock ?? 1}" data-field="stock" min="0" step="1" /></label>
+        </div>
+        <label class="editor-field"><span>Image URL</span><input type="text" value="${esc(p.image_url || "")}" placeholder="Or upload below" data-field="image_url" /></label>
+        <label class="editor-field"><span>Upload image</span><input type="file" accept="image/*" data-field="image_file" /></label>
         <div class="faq-editor__actions">
           <button class="faq-editor__btn faq-editor__btn--save" data-save="${p.id}">Save</button>
           <button class="faq-editor__btn faq-editor__btn--delete" data-delete="${p.id}">Delete</button>
@@ -299,9 +316,11 @@
     }
     deliveryList.innerHTML = deliveryItems.map((d) => `
       <div class="faq-editor__item" data-id="${d.id}">
-        <input type="text" value="${esc(d.label)}" placeholder="Label (e.g. UK courier)" data-field="label" />
-        <input type="number" value="${d.price}" placeholder="Price (£) — 0 for free" data-field="price" min="0" step="0.01" />
-        <input type="number" value="${d.sort_order || 0}" placeholder="Sort order" data-field="sort_order" min="0" step="1" />
+        <label class="editor-field"><span>Label</span><input type="text" value="${esc(d.label)}" placeholder="e.g. UK courier" data-field="label" /></label>
+        <div class="product-item__grid">
+          <label class="editor-field"><span>Price (£) — 0 for free</span><input type="number" value="${d.price}" data-field="price" min="0" step="0.01" /></label>
+          <label class="editor-field"><span>Sort order</span><input type="number" value="${d.sort_order || 0}" data-field="sort_order" min="0" step="1" /></label>
+        </div>
         <label class="product-item__sold"><input type="checkbox" data-field="active" ${d.active !== false ? "checked" : ""} /> Visible at checkout</label>
         <div class="faq-editor__actions">
           <button class="faq-editor__btn faq-editor__btn--save" data-save="${d.id}">Save</button>
@@ -367,8 +386,8 @@
 
     faqEditor.innerHTML = faqItems.map((item) => `
       <div class="faq-editor__item" data-id="${item.id}">
-        <input type="text" value="${esc(item.question)}" placeholder="Question" data-field="question" />
-        <textarea placeholder="Answer" data-field="answer">${esc(item.answer)}</textarea>
+        <label class="editor-field"><span>Question</span><input type="text" value="${esc(item.question)}" data-field="question" /></label>
+        <label class="editor-field"><span>Answer</span><textarea data-field="answer">${esc(item.answer)}</textarea></label>
         <div class="faq-editor__actions">
           <button class="faq-editor__btn faq-editor__btn--save" data-save="${item.id}">Save</button>
           <button class="faq-editor__btn faq-editor__btn--delete" data-delete="${item.id}">Delete</button>
