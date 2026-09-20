@@ -45,7 +45,7 @@
   <!-- ===== HERO ===== -->
   <section class="hero" id="top">
     <div class="hero__media">
-      <img src="assets/img/piece-1.jpg" alt="A beautifully restored upcycled piece of furniture by Redo & Renew" />
+      <img src="assets/img/piece-1.jpg" alt="A beautifully restored upcycled piece of furniture by Redo & Renew" fetchpriority="high" decoding="async" />
       <div class="hero__overlay"></div>
     </div>
     <div class="hero__content">
@@ -75,8 +75,8 @@
   <section class="story" id="story">
     <div class="container story__grid">
       <div class="story__images reveal">
-        <img src="assets/img/piece-2.jpg" alt="A renewed piece with a fresh colour finish" class="story__img story__img--main" />
-        <img src="assets/img/piece-3.jpg" alt="Detail of hand-finished upcycled furniture" class="story__img story__img--sub" />
+        <img src="assets/img/piece-2.jpg" alt="A renewed piece with a fresh colour finish" class="story__img story__img--main" loading="lazy" decoding="async" />
+        <img src="assets/img/piece-3.jpg" alt="Detail of hand-finished upcycled furniture" class="story__img story__img--sub" loading="lazy" decoding="async" />
       </div>
       <div class="story__text">
         <span class="eyebrow reveal">Our Story</span>
@@ -449,7 +449,7 @@
   <footer class="footer">
     <div class="container footer__inner">
       <div class="footer__brand">
-        <img src="assets/img/logo.jpg" alt="Redo & Renew logo" class="footer__logo" />
+        <img src="assets/img/logo.jpg" alt="Redo & Renew logo" class="footer__logo" loading="lazy" decoding="async" />
         <div>
           <strong>Redo & Renew</strong><span> by Charline</span>
           <p>Bespoke furniture upcycling · Melton Mowbray</p>
@@ -457,9 +457,9 @@
       </div>
       <p class="footer__tag">Why replace when we can renew? ♻️</p>
       <nav class="footer__legal">
-        <a href="privacy.html">Privacy Policy</a>
-        <a href="refunds.html">Refund Policy</a>
-        <a href="terms.html">Terms of Service</a>
+        <a href="privacy/">Privacy Policy</a>
+        <a href="refunds/">Refund Policy</a>
+        <a href="terms/">Terms of Service</a>
         <a href="admin/">Admin</a>
       </nav>
       <p class="footer__copy">© <span id="year"></span> Redo & Renew by Charline. All rights reserved.</p>
@@ -495,8 +495,8 @@
     <button class="lightbox__nav lightbox__nav--next" id="lbNext" aria-label="Next">&#8250;</button>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
-  <script src="script.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="supabase-config.js"></script>
+  <script defer src="script.js"></script>
 </body>
 </html>

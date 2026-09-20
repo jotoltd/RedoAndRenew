@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const deliverySelect = document.getElementById("cDelivery");
   const render = () => {
     if (cart.length === 0) {
-      summaryItems.innerHTML = `<div class="summary__empty">Your basket is empty.<br /><a href="index.html#shop">Browse the shop →</a></div>`;
+      summaryItems.innerHTML = `<div class="summary__empty">Your basket is empty.<br /><a href="../#shop">Browse the shop →</a></div>`;
       sumSubtotal.textContent = "£0";
       sumDelivery.textContent = "Free";
       sumTotal.textContent = "£0";

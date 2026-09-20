@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       <div class="product-page__missing">
         <h1>Piece not found</h1>
         <p>This piece may have sold or been removed.</p>
-        <a href="index.html#shop" class="btn btn--primary">Back to shop</a>
+        <a href="../#shop" class="btn btn--primary">Back to shop</a>
       </div>`;
   };
 
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       ${p.description ? `<p class="product-page__desc">${esc(p.description)}</p>` : ""}
       <div class="product-page__actions">
         <button class="btn btn--primary" id="productAdd" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold" : "Add to Basket"}</button>
-        <a href="index.html#shop" class="product-page__back">← Back to shop</a>
+        <a href="../#shop" class="product-page__back">← Back to shop</a>
       </div>
       <p class="product-page__note">♻️ Every purchase keeps solid furniture out of landfill. Local delivery available across Melton Mowbray &amp; surrounding areas.</p>
     </div>
@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const back = root.querySelector(".product-page__back");
       if (back) {
         back.textContent = "Go to checkout →";
-        back.href = "checkout.html";
+        back.href = "../checkout/";
       }
     });
   }

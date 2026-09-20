@@ -112,12 +112,12 @@ document.addEventListener("DOMContentLoaded", () => {
         : "";
       return `
       <article class="product-card reveal" data-id="${p.id}">
-        <a class="product-card__media" href="product.html?id=${p.id}">
+        <a class="product-card__media" href="product/?id=${p.id}">
           <img src="${p.image_url}" alt="${p.name}" loading="lazy" />
           ${soldOut ? '<span class="product-card__badge product-card__badge--sold">Sold</span>' : p.tag ? `<span class="product-card__badge">${p.tag}</span>` : ""}
         </a>
         <div class="product-card__body">
-          <h3 class="product-card__title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+          <h3 class="product-card__title"><a href="product/?id=${p.id}">${p.name}</a></h3>
           <p class="product-card__desc">${p.description || ""}</p>
           ${stockLine}
           <div class="product-card__foot">
@@ -269,7 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (checkoutBtn) {
     checkoutBtn.addEventListener("click", () => {
       if (cart.length === 0) return;
-      window.location.href = "checkout.html";
+      window.location.href = "checkout/";
     });
   }
 
