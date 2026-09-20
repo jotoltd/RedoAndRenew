@@ -51,6 +51,12 @@
     .enquiry-card__badge--new { background: #e8f0e9; color: var(--green); }
     .enquiry-card__badge--read { background: #f0eee5; color: var(--muted); }
     .enquiry-card__badge--replied { background: #e9e4f0; color: #6b5b8a; }
+    .enquiry-card__badge--confirmed { background: #e4edf5; color: #3a6a8a; }
+    .enquiry-card__badge--completed { background: #e8f0e9; color: var(--green-dark); }
+    .order-card__items { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
+    .order-card__item { display: flex; justify-content: space-between; font-size: 0.92rem; color: var(--ink); padding: 4px 0; }
+    .order-card__item span:last-child { font-weight: 600; color: var(--green-dark); }
+    .order-card__total { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-weight: 700; color: var(--green-dark); }
     .enquiry-card__details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
     .enquiry-card__detail { font-size: 0.9rem; }
     .enquiry-card__detail strong { color: var(--green-dark); display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
@@ -137,7 +143,8 @@
       </div>
 
       <div class="dashboard__tabs">
-        <button class="dashboard__tab active" data-tab="renew">Renewals</button>
+        <button class="dashboard__tab active" data-tab="orders">Orders</button>
+        <button class="dashboard__tab" data-tab="renew">Renewals</button>
         <button class="dashboard__tab" data-tab="source">Sourcing</button>
         <button class="dashboard__tab" data-tab="other">Other</button>
         <button class="dashboard__tab" data-tab="products">Products</button>
@@ -145,8 +152,15 @@
         <button class="dashboard__tab" data-tab="faq">FAQ Editor</button>
       </div>
 
+      <!-- Orders panel -->
+      <div class="dashboard__panel active" data-panel="orders">
+        <div id="ordersList">
+          <p class="admin-login__note">Loading orders…</p>
+        </div>
+      </div>
+
       <!-- Enquiries panels -->
-      <div class="dashboard__panel active" data-panel="renew">
+      <div class="dashboard__panel" data-panel="renew">
         <div id="enquiriesRenew">
           <p class="admin-login__note">Loading enquiries…</p>
         </div>

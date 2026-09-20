@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const success = document.getElementById("success");
   const orderRef = document.getElementById("orderRef");
 
-  placeBtn.addEventListener("click", () => {
+  placeBtn.addEventListener("click", async () => {
     if (cart.length === 0) return;
 
     // basic validation
@@ -127,8 +127,55 @@ document.addEventListener("DOMContentLoaded", () => {
       el.style.borderColor = "";
     }
 
+    const val = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+    const subtotal = cart.reduce((s, i) => {
+      const p = products.find((x) => x.id === i.id);
+      return p ? s + p.price * i.qty : s;
+    }, 0);
+    const delivery = Number(deliverySelect.value) || 0;
+
     // generate order ref
     const ref = "RR-" + Date.now().toString(36).toUpperCase().slice(-6);
+
+    // save the order to Supabase
+    if (typeof supabase !== "undefined") {
+      placeBtn.disabled = true;
+      placeBtn.textContent = "Placing order…";
+
+      const order = {
+        ref,
+        name: val("cName"),
+        email: val("cEmail"),
+        phone: val("cPhone"),
+        address1: val("cAddr1"),
+        address2: val("cAddr2"),
+        town: val("cTown"),
+        postcode: val("cPostcode"),
+        delivery_method: deliverySelect.options[deliverySelect.selectedIndex]?.text || "",
+        notes: val("cNotes"),
+        items: cart.map((i) => {
+          const p = products.find((x) => x.id === i.id);
+          return { id: i.id, name: p ? p.name : "Item", price: p ? p.price : 0, qty: i.qty };
+        }),
+        subtotal,
+        delivery_price: delivery,
+        total: subtotal + delivery,
+        status: "new"
+      };
+
+      const { error } = await supabase.from("orders").insert([order]);
+      if (error) {
+        placeBtn.disabled = false;
+        placeBtn.textContent = "Something went wrong — please try again";
+        return;
+      }
+
+      // mark purchased pieces as sold
+      await Promise.all(
+        cart.map((i) => supabase.from("products").update({ sold: true }).eq("id", i.id))
+      );
+    }
+
     orderRef.textContent = ref;
 
     // clear cart

@@ -26,6 +26,67 @@
     window.location.href = "admin/";
   });
 
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  /* ---------- Orders ---------- */
+  const ordersList = document.getElementById("ordersList");
+  const fmt = (n) => "£" + Number(n || 0).toLocaleString("en-GB");
+
+  const loadOrders = async () => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error || !data || data.length === 0) {
+      ordersList.innerHTML = `<p class="admin-login__note">${error ? "Error loading orders." : "No orders yet."}</p>`;
+      return;
+    }
+
+    ordersList.innerHTML = data.map((o) => {
+      const date = new Date(o.created_at).toLocaleString("en-GB", {
+        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+      });
+      const items = Array.isArray(o.items) ? o.items : [];
+      const address = [o.address1, o.address2, o.town, o.postcode].filter(Boolean).join(", ");
+
+      return `
+        <div class="enquiry-card" data-id="${o.id}">
+          <div class="enquiry-card__head">
+            <div>
+              <div class="enquiry-card__name">${esc(o.ref)} — ${esc(o.name)}</div>
+              <div class="enquiry-card__meta">${date}</div>
+              <div class="enquiry-card__meta">📧 <a href="mailto:${esc(o.email)}" style="color:var(--green);">${esc(o.email)}</a>${o.phone ? ` · 📞 ${esc(o.phone)}` : ""}</div>
+              ${address ? `<div class="enquiry-card__meta">📍 ${esc(address)}</div>` : ""}
+              ${o.delivery_method ? `<div class="enquiry-card__meta">🚚 ${esc(o.delivery_method)}</div>` : ""}
+              ${o.notes ? `<div class="enquiry-card__meta">📝 ${esc(o.notes)}</div>` : ""}
+            </div>
+            <span class="enquiry-card__badge enquiry-card__badge--${o.status || "new"}">${o.status || "new"}</span>
+          </div>
+          <div class="order-card__items">
+            ${items.map((i) => `<div class="order-card__item"><span>${esc(i.name)} × ${i.qty}</span><span>${fmt(i.price * i.qty)}</span></div>`).join("")}
+            <div class="order-card__item"><span>Delivery</span><span>${Number(o.delivery_price) === 0 ? "Free" : fmt(o.delivery_price)}</span></div>
+            <div class="order-card__total"><span>Total</span><span>${fmt(o.total)}</span></div>
+          </div>
+          <div class="enquiry-card__actions">
+            <button class="enquiry-card__btn" data-order-status="confirmed" data-id="${o.id}">Mark confirmed</button>
+            <button class="enquiry-card__btn" data-order-status="completed" data-id="${o.id}">Mark completed</button>
+            <button class="enquiry-card__btn" data-order-status="new" data-id="${o.id}">Mark as new</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    ordersList.querySelectorAll("[data-order-status]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        await supabase.from("orders").update({ status: btn.dataset.orderStatus }).eq("id", btn.dataset.id);
+        loadOrders();
+      });
+    });
+  };
+
+  loadOrders();
+
   /* ---------- Enquiries ---------- */
   const enquiryLists = {
     renew: document.getElementById("enquiriesRenew"),
@@ -73,15 +134,15 @@
         <div class="enquiry-card" data-id="${e.id}">
           <div class="enquiry-card__head">
             <div>
-              <div class="enquiry-card__name">${e.name}</div>
-              <div class="enquiry-card__meta">${typeLabels[e.enquiry_type] || e.enquiry_type} · ${date}</div>
-              <div class="enquiry-card__meta">📧 <a href="mailto:${e.email}" style="color:var(--green);">${e.email}</a>${e.phone ? ` · 📞 ${e.phone}` : ""}</div>
+              <div class="enquiry-card__name">${esc(e.name)}</div>
+              <div class="enquiry-card__meta">${esc(typeLabels[e.enquiry_type] || e.enquiry_type)} · ${date}</div>
+              <div class="enquiry-card__meta">📧 <a href="mailto:${esc(e.email)}" style="color:var(--green);">${esc(e.email)}</a>${e.phone ? ` · 📞 ${esc(e.phone)}` : ""}</div>
             </div>
             <span class="enquiry-card__badge enquiry-card__badge--${e.status || "new"}">${e.status || "new"}</span>
           </div>
           ${fields.length > 0 ? `
             <div class="enquiry-card__details">
-              ${fields.map(([label, val]) => `<div class="enquiry-card__detail"><strong>${label}</strong><span>${val}</span></div>`).join("")}
+              ${fields.map(([label, val]) => `<div class="enquiry-card__detail"><strong>${label}</strong><span>${esc(val)}</span></div>`).join("")}
             </div>
           ` : ""}
           ${Array.isArray(e.photos) && e.photos.length > 0 ? `
@@ -128,8 +189,6 @@
   };
 
   loadEnquiries();
-
-  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
   /* ---------- Products ---------- */
   const productsList = document.getElementById("productsList");
