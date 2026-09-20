@@ -106,12 +106,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     shopGrid.innerHTML = products.map((p) => `
       <article class="product-card reveal" data-id="${p.id}">
-        <div class="product-card__media">
+        <a class="product-card__media" href="product.html?id=${p.id}">
           <img src="${p.image_url}" alt="${p.name}" loading="lazy" />
           ${p.sold ? '<span class="product-card__badge product-card__badge--sold">Sold</span>' : p.tag ? `<span class="product-card__badge">${p.tag}</span>` : ""}
-        </div>
+        </a>
         <div class="product-card__body">
-          <h3 class="product-card__title">${p.name}</h3>
+          <h3 class="product-card__title"><a href="product.html?id=${p.id}">${p.name}</a></h3>
           <p class="product-card__desc">${p.description || ""}</p>
           <div class="product-card__foot">
             <span class="product-card__price">£${Number(p.price).toLocaleString("en-GB")}</span>
