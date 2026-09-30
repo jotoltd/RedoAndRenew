@@ -180,6 +180,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     shopGrid.innerHTML = products.map((p) => {
       const soldOut = p.sold || (p.stock != null && p.stock <= 0);
+      const enquireOnly = !soldOut && (p.enquire_only || !(Number(p.price) > 0));
+      const enquireHref = `?enquire=purchase&piece=${encodeURIComponent(p.name)}#contact`;
       const stockLine = showStockCount && !soldOut && p.stock != null
         ? `<p class="product-card__stock">${p.stock === 1 ? "Only 1 left" : p.stock + " left"}</p>`
         : "";
@@ -195,8 +197,11 @@ document.addEventListener("DOMContentLoaded", () => {
           ${stockLine}
           <p class="product-card__preloved">All pieces are preloved and lovingly upcycled. As with any previously loved furniture, you may notice some minor signs of its past life. These little imperfections are part of the character, charm and authenticity of each unique piece.</p>
           <div class="product-card__foot">
-            <span class="product-card__price">£${Number(p.price).toLocaleString("en-GB")}</span>
-            <button class="product-card__btn" data-add="${p.id}" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold" : "Add to Basket"}</button>
+            ${enquireOnly
+              ? `<span class="product-card__price product-card__price--enquire">Ready to be upcycled</span>
+                 <a class="product-card__btn" href="${enquireHref}">Enquire about me</a>`
+              : `<span class="product-card__price">£${Number(p.price).toLocaleString("en-GB")}</span>
+                 <button class="product-card__btn" data-add="${p.id}" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold" : "Add to Basket"}</button>`}
           </div>
         </div>
       </article>
@@ -299,7 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const addToCart = (id) => {
     const prod = products.find((x) => x.id === id);
-    if (!prod || prod.sold || (prod.stock != null && prod.stock <= 0)) return;
+    if (!prod || prod.sold || prod.enquire_only || !(Number(prod.price) > 0) || (prod.stock != null && prod.stock <= 0)) return;
     const maxQty = prod.stock != null ? prod.stock : Infinity;
     const existing = cart.find((i) => i.id === id);
     if (existing) existing.qty = Math.min(existing.qty + 1, maxQty);
@@ -407,6 +412,15 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   enquiryType.addEventListener("change", updateEnquiryType);
+
+  // "Enquire about me" links land here via ?enquire=purchase&piece=…
+  const prefill = new URLSearchParams(window.location.search);
+  const preType = prefill.get("enquire");
+  if (preType && [...enquiryType.options].some((o) => o.value === preType)) {
+    enquiryType.value = preType;
+    const piece = prefill.get("piece");
+    if (piece && form.elements.purchasePiece) form.elements.purchasePiece.value = piece;
+  }
   updateEnquiryType();
 
   form.addEventListener("submit", async (e) => {

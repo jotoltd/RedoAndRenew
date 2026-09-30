@@ -370,6 +370,7 @@
           <label class="editor-field"><span>Badge (optional)</span><input type="text" value="${esc(p.tag || "")}" placeholder="e.g. New, One of a kind" data-field="tag" /></label>
           <label class="editor-field"><span>Stock (0 = sold)</span><input type="number" value="${p.stock ?? 1}" data-field="stock" min="0" step="1" /></label>
         </div>
+        <label class="product-item__sold"><input type="checkbox" data-field="enquire_only" ${p.enquire_only ? "checked" : ""} /> “Enquire about me” — show an enquiry button instead of a price (for pieces ready to be upcycled)</label>
         <div class="editor-field"><span>Photos (first one is the cover)</span>
           <div class="product-photos" data-gallery="${p.id}"></div>
           <div class="product-item__grid" style="margin-top:8px;">
@@ -432,7 +433,8 @@
           images,
           image_url: images[0] || null,
           stock,
-          sold: stock <= 0
+          sold: stock <= 0,
+          enquire_only: row.querySelector('[data-field="enquire_only"]').checked
         };
         if (!updates.name) return;
         await supabase.from("products").update(updates).eq("id", id);

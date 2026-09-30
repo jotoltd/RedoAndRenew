@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const showStock = !stockSetting || stockSetting.value !== "false";
   const soldOut = p.sold || (p.stock != null && p.stock <= 0);
+  const enquireOnly = !soldOut && (p.enquire_only || !(Number(p.price) > 0));
   const stockNote = showStock && !soldOut && p.stock != null
     ? (p.stock === 1 ? "Only 1 available — once it's gone, it's gone." : `${p.stock} available`)
     : "";
@@ -54,12 +55,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     <div class="product-page__info">
       <span class="eyebrow">One of a kind</span>
       <h1>${esc(p.name)}</h1>
-      <p class="product-page__price">${fmt(p.price)}</p>
+      ${enquireOnly
+        ? '<p class="product-page__price product-page__price--enquire">Ready to be upcycled — price on enquiry</p>'
+        : `<p class="product-page__price">${fmt(p.price)}</p>`}
       ${stockNote ? `<p class="product-page__stock">${stockNote}</p>` : ""}
       ${p.description ? `<p class="product-page__desc">${esc(p.description)}</p>` : ""}
       <p class="product-page__preloved">All pieces are preloved and lovingly upcycled. As with any previously loved furniture, you may notice some minor signs of its past life. These little imperfections are part of the character, charm and authenticity of each unique piece.</p>
       <div class="product-page__actions">
-        <button class="btn btn--primary" id="productAdd" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold" : "Add to Basket"}</button>
+        ${enquireOnly
+          ? `<a class="btn btn--primary" href="/?enquire=purchase&piece=${encodeURIComponent(p.name)}#contact">Enquire about me</a>`
+          : `<button class="btn btn--primary" id="productAdd" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold" : "Add to Basket"}</button>`}
         <a href="../#shop" class="product-page__back">← Back to shop</a>
       </div>
       <p class="product-page__note">♻️ Every purchase gives solid furniture a second life. Delivery available far and wide from Melton Mowbray.</p>

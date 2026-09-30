@@ -64,8 +64,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof supabase !== "undefined") {
       const { data } = await supabase.from("products").select("*");
       if (data) products = data;
-      // drop stale cart entries that no longer match a real product
-      cart = cart.filter((i) => products.some((p) => p.id === i.id));
+      // drop stale cart entries and any enquire-only/£0 pieces (no checkout for those)
+      cart = cart.filter((i) => products.some((p) => p.id === i.id && !p.enquire_only && Number(p.price) > 0));
       localStorage.setItem("rn_cart", JSON.stringify(cart));
 
       const { data: deliv } = await supabase
