@@ -429,12 +429,14 @@ em { font-style: italic; color: var(--accent); font-weight: 500; }
 .contact__socials p { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 12px; }
 .contact__social-links { display: flex; gap: 12px; }
 .social {
-  padding: 10px 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
   border: 1.5px solid var(--green);
-  border-radius: 100px;
+  border-radius: 50%;
   color: var(--green);
-  font-weight: 600;
-  font-size: 0.9rem;
   transition: all 0.3s var(--ease);
 }
 .social:hover { background: var(--green); color: var(--cream); }
