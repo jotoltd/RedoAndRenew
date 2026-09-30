@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard — Redo & Renew by Charline</title>
-  <meta name="description" content="Admin dashboard for Redo & Renew by Charline." />
+  <title>Admin Dashboard — Redo & Renew</title>
+  <meta name="description" content="Admin dashboard for Redo & Renew." />
   <meta name="robots" content="noindex" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -198,6 +198,7 @@
         <button class="dashboard__tab active" data-tab="orders">Orders <span class="tab-count" id="countOrders"></span></button>
         <button class="dashboard__tab" data-tab="enquiries">Enquiries <span class="tab-count" id="countEnquiries"></span></button>
         <button class="dashboard__tab" data-tab="products">Products</button>
+        <button class="dashboard__tab" data-tab="gallery">Gallery</button>
         <button class="dashboard__tab" data-tab="delivery">Delivery</button>
         <button class="dashboard__tab" data-tab="faq">FAQ Editor</button>
         <button class="dashboard__tab" data-tab="settings">Settings</button>
@@ -225,6 +226,7 @@
           <button class="enquiry-filter active" data-filter="all">All</button>
           <button class="enquiry-filter" data-filter="renew">Renewals</button>
           <button class="enquiry-filter" data-filter="source">Sourcing</button>
+          <button class="enquiry-filter" data-filter="purchase">Purchases</button>
           <button class="enquiry-filter" data-filter="other">Other</button>
         </div>
         <div id="enquiriesList">
@@ -238,6 +240,15 @@
           <p class="admin-login__note">Loading products…</p>
         </div>
         <button class="faq-editor__add" id="addProductBtn">+ Add product</button>
+      </div>
+
+      <!-- Gallery panel -->
+      <div class="dashboard__panel" data-panel="gallery">
+        <div id="galleryList">
+          <p class="admin-login__note">Loading gallery…</p>
+        </div>
+        <button class="faq-editor__add" id="addGalleryBtn">+ Add photos</button>
+        <input type="file" id="galleryFileInput" accept="image/*" multiple hidden />
       </div>
 
       <!-- Delivery panel -->

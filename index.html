@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Redo & Renew by Charline — Bespoke Furniture Upcycling in Melton Mowbray</title>
-  <meta name="description" content="Redo & Renew by Charline rescues forgotten furniture and gives it a fresh, stylish second life. Sustainable, bespoke, hand-finished pieces in Melton Mowbray & surrounding areas." />
+  <title>Redo & Renew — Bespoke Furniture Upcycling | Melton Mowbray & beyond</title>
+  <meta name="description" content="Redo & Renew rescues forgotten furniture and gives it a fresh, stylish second life. Sustainable, bespoke, hand-finished pieces delivered far and wide from Melton Mowbray." />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,8 +20,8 @@
   <header class="nav" id="nav">
     <div class="nav__inner">
       <a href="#top" class="nav__brand">
-        <img src="assets/img/logo.jpg" alt="Redo & Renew by Charline logo" class="nav__logo" />
-        <span class="nav__name">Redo & Renew<span class="nav__by"> by Charline</span></span>
+        <img src="assets/img/logo.jpg" alt="Redo & Renew logo" class="nav__logo" />
+        <span class="nav__name">Redo & Renew</span>
       </a>
       <nav class="nav__links" id="navLinks">
         <a href="#story">Our Story</a>
@@ -45,13 +45,13 @@
   <!-- ===== HERO ===== -->
   <section class="hero" id="top">
     <div class="hero__media">
-      <img src="assets/img/piece-1.jpg" alt="A beautifully restored upcycled piece of furniture by Redo & Renew" fetchpriority="high" decoding="async" />
+      <img src="assets/img/hero.jpg" alt="A bedside cabinet being hand-painted green by Redo & Renew" fetchpriority="high" decoding="async" />
       <div class="hero__overlay"></div>
     </div>
     <div class="hero__content">
-      <span class="eyebrow reveal">Melton Mowbray & surrounding areas</span>
+      <span class="eyebrow reveal">Melton Mowbray · covering far and wide</span>
       <h1 class="hero__title reveal">Every piece has a story<br /><em>worth saving.</em></h1>
-      <p class="hero__lead reveal">We rescue forgotten, worn-out furniture and give it a fresh, stylish second life — keeping it out of landfills and in loving homes.</p>
+      <p class="hero__lead reveal">We rescue forgotten, worn-out furniture and give it a fresh, stylish second life in loving homes.</p>
       <div class="hero__actions reveal">
         <a href="#shop" class="btn btn--primary">Shop Pieces</a>
         <a href="#gallery" class="btn btn--ghost">View Our Work</a>
@@ -75,14 +75,14 @@
   <section class="story" id="story">
     <div class="container story__grid">
       <div class="story__images reveal">
-        <img src="assets/img/piece-2.jpg" alt="A renewed piece with a fresh colour finish" class="story__img story__img--main" loading="lazy" decoding="async" />
-        <img src="assets/img/piece-3.jpg" alt="Detail of hand-finished upcycled furniture" class="story__img story__img--sub" loading="lazy" decoding="async" />
+        <img src="assets/img/piece-9.jpg" alt="A van loaded with rescued furniture ready for a second life" class="story__img story__img--main" loading="lazy" decoding="async" />
+        <img src="assets/img/piece-12.jpg" alt="A chest of drawers renewed in dusky pink with floral knobs" class="story__img story__img--sub" loading="lazy" decoding="async" />
       </div>
       <div class="story__text">
         <span class="eyebrow reveal">Our Story</span>
         <h2 class="reveal">Why replace when<br />we can <em>renew</em>?</h2>
-        <p class="reveal">At Redo & Renew, we believe every piece of furniture has a story worth saving. We rescue forgotten, worn-out pieces from our local community and give them a fresh, stylish second life — keeping them out of landfills and in loving homes.</p>
-        <p class="reveal">Charline transforms tired furniture into beautiful, bespoke pieces made to last. Because solid quality should never be swapped for flat-pack.</p>
+        <p class="reveal">At Redo & Renew, we believe every piece of furniture has a story worth saving. We rescue forgotten, worn-out pieces from our local community and give them a fresh, stylish second life in loving homes.</p>
+        <p class="reveal">We transform tired furniture into beautiful, bespoke pieces made to last. Because solid quality should never be swapped for flat-pack.</p>
         <ul class="story__list reveal">
           <li>Hand-picked pieces rescued locally</li>
           <li>Bespoke colour & finish, your way</li>
@@ -103,12 +103,12 @@
         <article class="value-card reveal">
           <div class="value-card__icon">♻️</div>
           <h3>Sustainable</h3>
-          <p>Rescuing furniture from landfill and breathing new life into it — one piece at a time.</p>
+          <p>Saving furniture from the skip and breathing new life into it — one piece at a time.</p>
         </article>
         <article class="value-card reveal">
           <div class="value-card__icon">🎨</div>
           <h3>Custom Colour</h3>
-          <p>Want a new shade to suit your space? We'll match your vision with a bespoke finish.</p>
+          <p>Want a new colour to suit your space? We'll match your vision with a bespoke finish.</p>
         </article>
         <article class="value-card reveal">
           <div class="value-card__icon">🪵</div>
@@ -118,7 +118,7 @@
         <article class="value-card reveal">
           <div class="value-card__icon">📍</div>
           <h3>Local</h3>
-          <p>Proudly based in Melton Mowbray, serving the surrounding areas with love and care.</p>
+          <p>Proudly based in Melton Mowbray — covering far and wide with love and care.</p>
         </article>
       </div>
     </div>
@@ -130,14 +130,12 @@
       <div class="section-head">
         <span class="eyebrow reveal">A look at our work</span>
         <h2 class="reveal">From tired to treasured</h2>
-        <p class="section-sub reveal">A selection of pieces Charline has rescued, renewed and rehomed.</p>
+        <p class="section-sub reveal">A selection of pieces we've rescued, renewed and rehomed.</p>
       </div>
-      <div class="gallery__grid">
+      <div class="gallery__filters" id="galleryFilters"></div>
+      <div class="gallery__grid" id="galleryGrid">
         <figure class="gallery__item gallery__item--tall reveal">
           <img src="assets/img/piece-1.jpg" alt="Renewed furniture piece 1" loading="lazy" />
-        </figure>
-        <figure class="gallery__item reveal">
-          <img src="assets/img/piece-4.jpg" alt="Renewed furniture piece 2" loading="lazy" />
         </figure>
         <figure class="gallery__item gallery__item--wide reveal">
           <img src="assets/img/piece-2.jpg" alt="Renewed furniture piece 3" loading="lazy" />
@@ -164,12 +162,12 @@
       <div class="section-head">
         <span class="eyebrow reveal">Available now</span>
         <h2 class="reveal">Take a piece home</h2>
-        <p class="section-sub reveal">Each piece is one-of-a-kind, hand-finished by Charline. Once it's gone, it's gone.</p>
+        <p class="section-sub reveal">Each piece is one-of-a-kind and hand-finished. Once it's gone, it's gone.</p>
       </div>
       <div class="shop__grid" id="shopGrid">
         <!-- Product cards injected by script.js -->
       </div>
-      <p class="shop__note reveal">♻️ Every purchase keeps solid furniture out of landfill. Local delivery available across Melton Mowbray & surrounding areas.</p>
+      <p class="shop__note reveal">♻️ Every purchase gives solid furniture a second life. Delivery available far and wide from Melton Mowbray.</p>
     </div>
   </section>
 
@@ -189,12 +187,12 @@
         <div class="step reveal">
           <div class="step__num">02</div>
           <h3>Renew</h3>
-          <p>Charline restores, repairs and finishes each piece by hand — with a bespoke colour to suit your home.</p>
+          <p>We restore, repair and finish each piece by hand — with a bespoke colour to suit your home.</p>
         </div>
         <div class="step reveal">
           <div class="step__num">03</div>
           <h3>Rehome</h3>
-          <p>A one-of-a-kind piece, ready to be loved for years to come. Out of landfill, into your living room.</p>
+          <p>A one-of-a-kind piece, ready to be loved for years to come — rescued, renewed and rehomed.</p>
         </div>
       </div>
     </div>
@@ -205,7 +203,7 @@
     <div class="container quote__inner reveal">
       <p class="quote__mark">“</p>
       <blockquote>If you love supporting local and giving furniture a second life, you're in the right place.</blockquote>
-      <cite>— Charline, Redo & Renew</cite>
+      <cite>— Redo & Renew</cite>
     </div>
   </section>
 
@@ -229,9 +227,9 @@
       <div class="contact__text">
         <span class="eyebrow reveal">Let's get started</span>
         <h2 class="reveal">Got a piece that needs a second life?</h2>
-        <p class="reveal">Whether you have a tired piece you'd like renewed, or you're looking for something bespoke for your home, Charline would love to hear from you.</p>
+        <p class="reveal">Whether you have a tired piece you'd like renewed, or you're looking for something bespoke for your home, we'd love to hear from you.</p>
         <ul class="contact__details reveal">
-          <li><span class="contact__label">📍</span> Melton Mowbray & surrounding areas</li>
+          <li><span class="contact__label">📍</span> Melton Mowbray · covering far and wide</li>
           <li><span class="contact__label">♻️</span> Sustainable, bespoke upcycling</li>
           <li><span class="contact__label">🎨</span> Custom colour changes welcome</li>
         </ul>
@@ -250,6 +248,7 @@
             <option value="" selected disabled>Please choose an option…</option>
             <option value="renew">Renewing a piece I own</option>
             <option value="source">Source an item for me</option>
+            <option value="purchase">Buying a piece from the shop</option>
             <option value="other">Something else</option>
           </select>
         </div>
@@ -411,6 +410,21 @@
           </div>
         </div>
 
+        <div class="form-panel" data-panel="purchase" hidden>
+          <p class="form-panel__intro"><strong>Buying a piece from the shop 🪑</strong></p>
+          <p class="form-panel__intro">Seen something you love? Tell me which piece you're interested in and ask me anything — delivery, payment, viewing or a closer look at the finish.</p>
+
+          <div class="field">
+            <label for="purchasePiece">Which piece are you interested in?</label>
+            <span class="field__hint">The name of the piece from the shop, if you know it.</span>
+            <input type="text" id="purchasePiece" name="purchasePiece" />
+          </div>
+          <div class="field">
+            <label for="purchaseMessage">Your message</label>
+            <textarea id="purchaseMessage" name="purchaseMessage" rows="5" placeholder="e.g. Is delivery available to…?"></textarea>
+          </div>
+        </div>
+
         <div class="form-panel" data-panel="other" hidden>
           <div class="field">
             <label for="otherMessage">Tell me a little more about what you need.</label>
@@ -451,7 +465,7 @@
       <div class="footer__brand">
         <img src="assets/img/logo.jpg" alt="Redo & Renew logo" class="footer__logo" loading="lazy" decoding="async" />
         <div>
-          <strong>Redo & Renew</strong><span> by Charline</span>
+          <strong>Redo & Renew</strong>
           <p>Bespoke furniture upcycling · Melton Mowbray</p>
         </div>
       </div>
@@ -462,7 +476,7 @@
         <a href="terms/">Terms of Service</a>
         <a href="admin/">Admin</a>
       </nav>
-      <p class="footer__copy">© <span id="year"></span> Redo & Renew by Charline. All rights reserved.</p>
+      <p class="footer__copy">© <span id="year"></span> Redo & Renew. All rights reserved.</p>
     </div>
   </footer>
 
@@ -483,7 +497,7 @@
         <strong id="cartTotal">£0</strong>
       </div>
       <button class="btn btn--primary btn--full" id="checkoutBtn">Checkout</button>
-      <p class="cart-drawer__hint">Demo checkout — no payment is taken.</p>
+      <p class="cart-drawer__hint">Secure checkout powered by Stripe.</p>
     </div>
   </aside>
 

@@ -3,7 +3,8 @@
    ============================================================ */
 
 (async () => {
-  if (sessionStorage.getItem("rr_admin") !== "1") {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
     window.location.href = "../admin/";
     return;
   }
@@ -21,8 +22,8 @@
   });
 
   /* ---------- Logout ---------- */
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    sessionStorage.removeItem("rr_admin");
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await supabase.auth.signOut();
     window.location.href = "../admin/";
   });
 
@@ -108,15 +109,18 @@
     ordersList.querySelectorAll("[data-order-refund]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const order = allOrders.find((x) => String(x.id) === btn.dataset.orderRefund);
-        const pw = prompt(`Refund ${order ? fmt(order.total) : "this order"} to the customer? Enter your admin password to confirm:`);
-        if (pw === null) return;
+        if (!confirm(`Refund ${order ? fmt(order.total) : "this order"} to the customer? This can't be undone.`)) return;
         btn.disabled = true;
         btn.textContent = "Refunding…";
         try {
+          const { data: { session } } = await supabase.auth.getSession();
           const res = await fetch(`${SUPABASE_URL}/functions/v1/refund-order`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ order_id: Number(btn.dataset.orderRefund), password: pw }),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session ? session.access_token : ""}`,
+            },
+            body: JSON.stringify({ order_id: Number(btn.dataset.orderRefund) }),
           });
           const data = await res.json();
           if (!res.ok || !data.ok) {
@@ -195,6 +199,7 @@
   const typeLabels = {
     renew: "Renewing a piece",
     source: "Sourcing request",
+    purchase: "Shop purchase",
     other: "Something else"
   };
 
@@ -224,6 +229,9 @@
         if (e.source_location) fields.push(["Location", e.source_location]);
         if (e.source_deadline) fields.push(["Deadline", e.source_deadline]);
         if (e.source_notes) fields.push(["Notes", e.source_notes]);
+      } else if (e.enquiry_type === "purchase") {
+        if (e.purchase_piece) fields.push(["Piece interested in", e.purchase_piece]);
+        if (e.purchase_message) fields.push(["Message", e.purchase_message]);
       } else {
         if (e.other_message) fields.push(["Message", e.other_message]);
       }
@@ -595,21 +603,21 @@
       passwordNote.textContent = "Enter your current password and a new one (6+ characters).";
       return;
     }
-    try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-auth`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "set_password", password: current, next: pw }),
-      });
-      const data = await res.json();
-      const ok = res.ok && data.ok;
-      passwordNote.style.color = ok ? "var(--green)" : "#c0392b";
-      passwordNote.textContent = ok ? "Password updated ✓" : (data.error || "Couldn't save — check your current password.");
-      if (ok) { settingPassword.value = ""; settingPasswordCurrent.value = ""; }
-    } catch {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error: checkErr } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: current,
+    });
+    if (checkErr) {
       passwordNote.style.color = "#c0392b";
-      passwordNote.textContent = "Couldn't save — the admin-auth function isn't deployed yet.";
+      passwordNote.textContent = "Current password is incorrect.";
+      setTimeout(() => (passwordNote.textContent = ""), 2500);
+      return;
     }
+    const { error: updErr } = await supabase.auth.updateUser({ password: pw });
+    passwordNote.style.color = updErr ? "#c0392b" : "var(--green)";
+    passwordNote.textContent = updErr ? "Couldn't save — please try again." : "Password updated ✓";
+    if (!updErr) { settingPassword.value = ""; settingPasswordCurrent.value = ""; }
     setTimeout(() => (passwordNote.textContent = ""), 2500);
   });
 
@@ -680,4 +688,106 @@
   });
 
   loadFaq();
+
+  /* ---------- Gallery ---------- */
+  const galleryList = document.getElementById("galleryList");
+  const addGalleryBtn = document.getElementById("addGalleryBtn");
+  const galleryFileInput = document.getElementById("galleryFileInput");
+  let galleryRows = [];
+
+  // storage URLs are absolute; bundled assets need ../ from /dashboard/
+  const gallerySrc = (u) => /^https?:/.test(u) ? u : "../" + String(u).replace(/^\/+/, "");
+
+  const renderGalleryAdmin = () => {
+    if (!galleryRows.length) {
+      galleryList.innerHTML = '<p class="admin-login__note">No gallery photos yet — add some below.</p>';
+      return;
+    }
+    const cats = [...new Set(galleryRows.map((g) => g.category).filter(Boolean))];
+    galleryList.innerHTML = `<datalist id="galleryCats">${cats.map((c) => `<option value="${esc(c)}">`).join("")}</datalist>`
+      + galleryRows.map((g) => `
+      <div class="faq-editor__item" data-id="${g.id}">
+        <div class="product-item__row">
+          <img class="product-item__img" src="${esc(gallerySrc(g.image_url))}" alt="" />
+          <div class="product-item__fields">
+            <label class="editor-field"><span>Caption</span><input type="text" value="${esc(g.title || "")}" data-field="title" /></label>
+            <div class="product-item__grid">
+              <label class="editor-field"><span>Category</span><input type="text" list="galleryCats" value="${esc(g.category || "")}" data-field="category" /></label>
+              <label class="editor-field"><span>Sort order</span><input type="number" value="${g.sort_order || 0}" data-field="sort_order" /></label>
+            </div>
+          </div>
+        </div>
+        <div class="faq-editor__actions">
+          <button class="faq-editor__btn faq-editor__btn--save" data-save="${g.id}">Save</button>
+          <button class="faq-editor__btn faq-editor__btn--delete" data-delete="${g.id}">Delete</button>
+        </div>
+      </div>`).join("");
+
+    galleryList.querySelectorAll("[data-save]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const row = btn.closest(".faq-editor__item");
+        const val = (f) => row.querySelector(`[data-field="${f}"]`).value.trim();
+        await supabase.from("gallery_items").update({
+          title: val("title"),
+          category: val("category") || "Other",
+          sort_order: Number(val("sort_order")) || 0,
+        }).eq("id", btn.dataset.save);
+        btn.textContent = "Saved!";
+        setTimeout(() => (btn.textContent = "Save"), 1500);
+        loadGalleryAdmin();
+      });
+    });
+
+    galleryList.querySelectorAll("[data-delete]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm("Remove this photo from the gallery?")) return;
+        const g = galleryRows.find((x) => String(x.id) === btn.dataset.delete);
+        await supabase.from("gallery_items").delete().eq("id", btn.dataset.delete);
+        if (g) {
+          const m = g.image_url.match(/gallery-photos\/(.+)$/);
+          if (m) await supabase.storage.from("gallery-photos").remove([decodeURIComponent(m[1])]);
+        }
+        loadGalleryAdmin();
+      });
+    });
+  };
+
+  const loadGalleryAdmin = async () => {
+    const { data, error } = await supabase
+      .from("gallery_items")
+      .select("*")
+      .order("sort_order", { ascending: true });
+    if (error) {
+      galleryList.innerHTML = '<p class="admin-login__note">Error loading gallery.</p>';
+      return;
+    }
+    galleryRows = data || [];
+    renderGalleryAdmin();
+  };
+
+  addGalleryBtn.addEventListener("click", () => galleryFileInput.click());
+  galleryFileInput.addEventListener("change", async () => {
+    const files = Array.from(galleryFileInput.files || []);
+    if (!files.length) return;
+    addGalleryBtn.textContent = "Uploading…";
+    addGalleryBtn.disabled = true;
+    let next = galleryRows.length ? Math.max(...galleryRows.map((g) => g.sort_order || 0)) + 1 : 1;
+    for (const file of files) {
+      const path = `${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
+      const { error: upErr } = await supabase.storage.from("gallery-photos").upload(path, file);
+      if (upErr) continue;
+      const { data: pub } = supabase.storage.from("gallery-photos").getPublicUrl(path);
+      if (!pub || !pub.publicUrl) continue;
+      const title = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
+      await supabase.from("gallery_items").insert({
+        title, category: "Uncategorised", image_url: pub.publicUrl, sort_order: next++,
+      });
+    }
+    galleryFileInput.value = "";
+    addGalleryBtn.textContent = "+ Add photos";
+    addGalleryBtn.disabled = false;
+    loadGalleryAdmin();
+  });
+
+  loadGalleryAdmin();
 })();

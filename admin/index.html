@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Login — Redo & Renew by Charline</title>
-  <meta name="description" content="Admin login for Redo & Renew by Charline." />
+  <title>Admin Login — Redo & Renew</title>
+  <meta name="description" content="Admin login for Redo & Renew." />
   <meta name="robots" content="noindex" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,7 +20,7 @@
     <div class="admin-login__card">
       <img src="../assets/img/logo.jpg" alt="Redo & Renew logo" class="admin-login__logo" />
       <h1>Admin Login</h1>
-      <p class="admin-login__sub">Redo & Renew by Charline</p>
+      <p class="admin-login__sub">Redo & Renew</p>
 
       <form id="loginForm" class="admin-login__form">
         <div class="field">
@@ -42,46 +42,34 @@
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="../supabase-config.js"></script>
   <script>
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("loginEmail").value.trim();
-      const password = document.getElementById("loginPassword").value;
-      const note = document.getElementById("loginNote");
-
-      note.style.color = "var(--muted)";
-      note.textContent = "Logging in…";
-
-      // password is verified server-side; falls back to config if the
-      // admin-auth function isn't deployed yet
-      let ok = false;
-      try {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-auth`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "verify", password }),
-        });
-        const data = await res.json();
-        ok = !!data.ok;
-      } catch {
-        ok = password === ADMIN_PASSWORD;
-      }
-
-      if (email === ADMIN_EMAIL && ok) {
-        sessionStorage.setItem("rr_admin", "1");
-        note.style.color = "var(--green)";
-        note.textContent = "Logged in! Redirecting…";
+    document.addEventListener("DOMContentLoaded", async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
         window.location.href = "../dashboard/";
         return;
       }
 
-      note.style.color = "#c0392b";
-      note.textContent = "Invalid email or password. Please try again.";
-    });
+      document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        const note = document.getElementById("loginNote");
 
-    // Redirect if already logged in
-    if (sessionStorage.getItem("rr_admin") === "1") {
-      window.location.href = "../dashboard/";
-    }
+        note.style.color = "var(--muted)";
+        note.textContent = "Logging in…";
+
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (!error) {
+          note.style.color = "var(--green)";
+          note.textContent = "Logged in! Redirecting…";
+          window.location.href = "../dashboard/";
+          return;
+        }
+
+        note.style.color = "#c0392b";
+        note.textContent = "Invalid email or password. Please try again.";
+      });
+    });
   </script>
 </body>
 </html>

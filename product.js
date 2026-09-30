@@ -1,5 +1,5 @@
 /* ============================================================
-   Product detail page — Redo & Renew by Charline
+   Product detail page — Redo & Renew
    ============================================================ */
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     ? (p.stock === 1 ? "Only 1 available — once it's gone, it's gone." : `${p.stock} available`)
     : "";
 
-  document.title = `${p.name} — Redo & Renew by Charline`;
+  document.title = `${p.name} — Redo & Renew`;
 
   const gallery = (Array.isArray(p.images) && p.images.length
     ? p.images
@@ -57,11 +57,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       <p class="product-page__price">${fmt(p.price)}</p>
       ${stockNote ? `<p class="product-page__stock">${stockNote}</p>` : ""}
       ${p.description ? `<p class="product-page__desc">${esc(p.description)}</p>` : ""}
+      <p class="product-page__preloved">All pieces are preloved and lovingly upcycled. As with any previously loved furniture, you may notice some minor signs of its past life. These little imperfections are part of the character, charm and authenticity of each unique piece.</p>
       <div class="product-page__actions">
         <button class="btn btn--primary" id="productAdd" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold" : "Add to Basket"}</button>
         <a href="../#shop" class="product-page__back">← Back to shop</a>
       </div>
-      <p class="product-page__note">♻️ Every purchase keeps solid furniture out of landfill. Local delivery available across Melton Mowbray &amp; surrounding areas.</p>
+      <p class="product-page__note">♻️ Every purchase gives solid furniture a second life. Delivery available far and wide from Melton Mowbray.</p>
     </div>
   `;
 

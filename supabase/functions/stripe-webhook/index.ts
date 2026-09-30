@@ -107,8 +107,8 @@ Deno.serve(async (req) => {
               <tr><td style="padding:8px 0;font-weight:bold;">Total</td><td style="text-align:right;font-weight:bold;">£${Number(order.total).toLocaleString("en-GB")}</td></tr>
             </table>
             ${address ? `<p style="color:#666;font-size:14px;">Delivering to: ${address}</p>` : ""}
-            <p style="color:#666;font-size:14px;">Charline will be in touch shortly to arrange delivery. ♻️</p>
-            <p style="color:#666;font-size:14px;">— Redo &amp; Renew by Charline</p>
+            <p style="color:#666;font-size:14px;">We'll be in touch shortly to arrange delivery. ♻️</p>
+            <p style="color:#666;font-size:14px;">— Redo &amp; Renew</p>
           </div>`;
         const to = [order.email];
         const notify = Deno.env.get("ORDER_NOTIFY_EMAIL");

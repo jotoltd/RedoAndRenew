@@ -1,13 +1,13 @@
-# Redo & Renew by Charline
+# Redo & Renew
 
-We believe every piece of furniture has a story worth saving. At Redo & Renew, we rescue forgotten, worn-out pieces from our local community and give them a fresh, stylish second life — keeping them out of landfills and in loving homes.
+We believe every piece of furniture has a story worth saving. At Redo & Renew, we rescue forgotten, worn-out pieces from our local community and give them a fresh, stylish second life in loving homes.
 
-I transform tired furniture into beautiful, bespoke pieces made to last — because why replace when we can renew?
+We transform tired furniture into beautiful, bespoke pieces made to last — because why replace when we can renew?
 
 - ♻️ Sustainable
 - 🎨 Custom colour changes
 - 🪵 Solid quality over flat-pack
-- 📍 Melton Mowbray & surrounding areas
+- 📍 Melton Mowbray · covering far and wide
 
 ## Tech
 

@@ -1,5 +1,5 @@
 /* ============================================================
-   Redo & Renew by Charline — Interactions
+   Redo & Renew — Interactions
    ============================================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -8,28 +8,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ---------- Nav scroll state ---------- */
   const nav = document.getElementById("nav");
-  const onScroll = () => {
-    if (window.scrollY > 40) nav.classList.add("scrolled");
-    else nav.classList.remove("scrolled");
-  };
-  onScroll();
-  window.addEventListener("scroll", onScroll, { passive: true });
+  if (nav) {
+    const onScroll = () => {
+      if (window.scrollY > 40) nav.classList.add("scrolled");
+      else nav.classList.remove("scrolled");
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+  }
 
   /* ---------- Mobile menu ---------- */
   const toggle = document.getElementById("navToggle");
   const links = document.getElementById("navLinks");
-  toggle.addEventListener("click", () => {
-    const open = links.classList.toggle("open");
-    toggle.classList.toggle("open", open);
-    toggle.setAttribute("aria-expanded", open);
-  });
-  links.querySelectorAll("a").forEach((a) =>
-    a.addEventListener("click", () => {
-      links.classList.remove("open");
-      toggle.classList.remove("open");
-      toggle.setAttribute("aria-expanded", "false");
-    })
-  );
+  if (toggle && links) {
+    toggle.addEventListener("click", () => {
+      const open = links.classList.toggle("open");
+      toggle.classList.toggle("open", open);
+      toggle.setAttribute("aria-expanded", open);
+    });
+    links.querySelectorAll("a").forEach((a) =>
+      a.addEventListener("click", () => {
+        links.classList.remove("open");
+        toggle.classList.remove("open");
+        toggle.setAttribute("aria-expanded", "false");
+      })
+    );
+  }
 
   /* ---------- Reveal on scroll ---------- */
   const reveals = document.querySelectorAll(".reveal");
@@ -53,45 +57,114 @@ document.addEventListener("DOMContentLoaded", () => {
     reveals.forEach((el) => el.classList.add("in"));
   }
 
-  /* ---------- Lightbox ---------- */
+  /* ---------- Gallery (categories + lightbox) ---------- */
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const galleryGrid = document.getElementById("galleryGrid");
+  const galleryFilters = document.getElementById("galleryFilters");
   const lb = document.getElementById("lightbox");
-  const lbImg = document.getElementById("lbImg");
-  const lbClose = document.getElementById("lbClose");
-  const lbPrev = document.getElementById("lbPrev");
-  const lbNext = document.getElementById("lbNext");
-  const galleryItems = Array.from(document.querySelectorAll(".gallery__item img"));
-  let current = 0;
 
-  const showImage = (i) => {
-    current = (i + galleryItems.length) % galleryItems.length;
-    lbImg.src = galleryItems[current].src;
-    lbImg.alt = galleryItems[current].alt;
-  };
-  const openLb = (i) => {
-    showImage(i);
-    lb.classList.add("open");
-    lb.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-  };
-  const closeLb = () => {
-    lb.classList.remove("open");
-    lb.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
-  };
+  if (galleryGrid && lb) {
+    const lbImg = document.getElementById("lbImg");
+    const lbClose = document.getElementById("lbClose");
+    const lbPrev = document.getElementById("lbPrev");
+    const lbNext = document.getElementById("lbNext");
+    let current = 0;
+    let visibleImgs = [];
 
-  galleryItems.forEach((img, i) =>
-    img.parentElement.addEventListener("click", () => openLb(i))
-  );
-  lbClose.addEventListener("click", closeLb);
-  lb.addEventListener("click", (e) => { if (e.target === lb) closeLb(); });
-  lbPrev.addEventListener("click", () => showImage(current - 1));
-  lbNext.addEventListener("click", () => showImage(current + 1));
-  document.addEventListener("keydown", (e) => {
-    if (!lb.classList.contains("open")) return;
-    if (e.key === "Escape") closeLb();
-    if (e.key === "ArrowLeft") showImage(current - 1);
-    if (e.key === "ArrowRight") showImage(current + 1);
-  });
+    const showImage = (i) => {
+      if (!visibleImgs.length) return;
+      current = (i + visibleImgs.length) % visibleImgs.length;
+      lbImg.src = visibleImgs[current].src;
+      lbImg.alt = visibleImgs[current].alt;
+    };
+    const openLb = (i) => {
+      showImage(i);
+      lb.classList.add("open");
+      lb.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+    };
+    const closeLb = () => {
+      lb.classList.remove("open");
+      lb.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    };
+
+    // lightbox indexes only the currently-visible items
+    const bindGalleryItems = () => {
+      visibleImgs = Array.from(
+        galleryGrid.querySelectorAll(".gallery__item:not(.gallery__item--hidden) img")
+      );
+      galleryGrid.querySelectorAll(".gallery__item").forEach((fig) => {
+        fig.onclick = () => {
+          const i = visibleImgs.indexOf(fig.querySelector("img"));
+          if (i >= 0) openLb(i);
+        };
+      });
+    };
+
+    const applyGalleryFilter = (cat) => {
+      galleryFilters.querySelectorAll(".gallery__filter").forEach((b) =>
+        b.classList.toggle("active", b.dataset.cat === cat)
+      );
+      galleryGrid.querySelectorAll(".gallery__item").forEach((fig) => {
+        fig.classList.toggle("gallery__item--hidden", cat !== "all" && fig.dataset.cat !== cat);
+      });
+      bindGalleryItems();
+    };
+
+    // same mosaic rhythm as the original static grid
+    const spanClass = (i) =>
+      i % 7 === 0 || i % 7 === 4 ? " gallery__item--tall"
+        : i % 7 === 2 || i % 7 === 6 ? " gallery__item--wide" : "";
+
+    const renderGallery = (items) => {
+      galleryGrid.innerHTML = items.map((g, i) => `
+        <figure class="gallery__item${spanClass(i)} reveal" data-cat="${esc(g.category || "Other")}">
+          <img src="${esc(g.image_url)}" alt="${esc(g.title || "Renewed furniture piece")}" loading="lazy" />
+          ${g.category ? `<figcaption class="gallery__cat">${esc(g.category)}</figcaption>` : ""}
+        </figure>`).join("");
+      galleryGrid.querySelectorAll(".reveal").forEach((el) => {
+        if (io) io.observe(el);
+        else el.classList.add("in");
+      });
+    };
+
+    const renderGalleryFilters = (cats) => {
+      galleryFilters.innerHTML = ["all", ...cats].map((c) =>
+        `<button class="gallery__filter${c === "all" ? " active" : ""}" data-cat="${esc(c)}">${c === "all" ? "All" : esc(c)}</button>`
+      ).join("");
+      galleryFilters.querySelectorAll(".gallery__filter").forEach((b) =>
+        b.addEventListener("click", () => applyGalleryFilter(b.dataset.cat))
+      );
+    };
+
+    const loadGallery = async () => {
+      if (typeof supabase !== "undefined") {
+        const { data } = await supabase
+          .from("gallery_items")
+          .select("*")
+          .order("sort_order", { ascending: true });
+        if (data && data.length) {
+          renderGallery(data);
+          const cats = [...new Set(data.map((g) => g.category).filter(Boolean))];
+          if (cats.length > 1) renderGalleryFilters(cats);
+        }
+      }
+      bindGalleryItems();
+    };
+    loadGallery();
+
+    lbClose.addEventListener("click", closeLb);
+    lb.addEventListener("click", (e) => { if (e.target === lb) closeLb(); });
+    lbPrev.addEventListener("click", () => showImage(current - 1));
+    lbNext.addEventListener("click", () => showImage(current + 1));
+    document.addEventListener("keydown", (e) => {
+      if (!lb.classList.contains("open")) return;
+      if (e.key === "Escape") closeLb();
+      if (e.key === "ArrowLeft") showImage(current - 1);
+      if (e.key === "ArrowRight") showImage(current + 1);
+    });
+  }
 
   /* ---------- Shop (products loaded from Supabase) ---------- */
   let products = [];
@@ -120,6 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <h3 class="product-card__title"><a href="product/?id=${p.id}">${p.name}</a></h3>
           <p class="product-card__desc">${p.description || ""}</p>
           ${stockLine}
+          <p class="product-card__preloved">All pieces are preloved and lovingly upcycled. As with any previously loved furniture, you may notice some minor signs of its past life. These little imperfections are part of the character, charm and authenticity of each unique piece.</p>
           <div class="product-card__foot">
             <span class="product-card__price">£${Number(p.price).toLocaleString("en-GB")}</span>
             <button class="product-card__btn" data-add="${p.id}" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold" : "Add to Basket"}</button>
@@ -157,6 +231,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ---------- Cart ---------- */
   let cart = JSON.parse(localStorage.getItem("rn_cart") || "[]");
   const cartBtn = document.getElementById("cartBtn");
+  if (!cartBtn) return; // legal pages have no shop/cart — stop here
   const cartDrawer = document.getElementById("cartDrawer");
   const cartOverlay = document.getElementById("cartOverlay");
   const cartClose = document.getElementById("cartClose");
@@ -307,12 +382,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("enquiryForm");
   const note = document.getElementById("formNote");
   const enquiryType = document.getElementById("service");
+  if (!form || !enquiryType) return;
   const panels = document.querySelectorAll("[data-panel]");
   const dependentFields = document.querySelectorAll(".enquiry-dependent");
   const disclaimer = document.querySelector(".form__disclaimer");
   const disclaimerText = {
     renew: "Please note: submitting this form is an enquiry only and does not secure a booking. A final price and timescale will be confirmed once the furniture and work required have been assessed.",
     source: "Submitting this form is a sourcing enquiry and does not guarantee that a suitable piece will be found. I’ll contact you if I find something that matches your requirements before proceeding with any purchase.",
+    purchase: "Please note: this is an enquiry only — the piece stays available until checkout is completed. We’ll confirm availability and next steps by email.",
     other: "Please note: submitting this form is an enquiry only and does not secure a booking. I’ll be in touch to discuss your request."
   };
 
@@ -338,7 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = form.elements.email.value.trim();
     if (!name || !email) {
       note.style.color = "#c0392b";
-      note.textContent = "Please add your name and email so Charline can reply.";
+      note.textContent = "Please add your name and email so we can reply.";
       return;
     }
 
@@ -368,6 +445,8 @@ document.addEventListener("DOMContentLoaded", () => {
       source_location: form.elements.sourceLocation ? form.elements.sourceLocation.value.trim() : "",
       source_deadline: form.elements.sourceDeadline ? form.elements.sourceDeadline.value.trim() : "",
       source_notes: form.elements.sourceNotes ? form.elements.sourceNotes.value.trim() : "",
+      purchase_piece: form.elements.purchasePiece ? form.elements.purchasePiece.value.trim() : "",
+      purchase_message: form.elements.purchaseMessage ? form.elements.purchaseMessage.value.trim() : "",
       other_message: form.elements.otherMessage ? form.elements.otherMessage.value.trim() : ""
     };
 
@@ -403,13 +482,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const { error } = await supabase.from("enquiries").insert([enquiry]);
       if (error) {
         note.style.color = "#c0392b";
-        note.textContent = "Sorry, something went wrong. Please try again or email Charline directly.";
+        note.textContent = "Sorry, something went wrong. Please try again or email us directly.";
         return;
       }
     }
 
     note.style.color = "var(--green)";
-    note.textContent = "Thank you! Your enquiry has been sent — Charline will be in touch soon.";
+    note.textContent = "Thank you! Your enquiry has been sent — we'll be in touch soon.";
     form.reset();
     updateEnquiryType();
   });

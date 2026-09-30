@@ -18,13 +18,15 @@ const json = (body: unknown, status = 200) =>
     headers: { ...cors, "Content-Type": "application/json" },
   });
 
-const checkPassword = async (password: string) => {
-  const { data } = await supabase
-    .from("admin_config")
-    .select("value")
-    .eq("key", "admin_password")
-    .maybeSingle();
-  return Boolean(data && data.value && data.value === password);
+// Only the admin auth user may trigger refunds
+const ADMIN_USER_ID =
+  Deno.env.get("ADMIN_USER_ID") ?? "dfc0e098-24de-42f5-8986-4cc88732c66b";
+
+const checkAdmin = async (req: Request) => {
+  const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!token) return false;
+  const { data: { user } } = await supabase.auth.getUser(token);
+  return Boolean(user && user.id === ADMIN_USER_ID);
 };
 
 Deno.serve(async (req) => {
@@ -32,10 +34,10 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
-    const { order_id, password } = await req.json();
+    const { order_id } = await req.json();
 
-    if (!(await checkPassword(String(password || "")))) {
-      return json({ error: "Incorrect admin password" }, 401);
+    if (!(await checkAdmin(req))) {
+      return json({ error: "Not authorised" }, 401);
     }
 
     const { data: order } = await supabase
