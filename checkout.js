@@ -109,11 +109,11 @@ document.addEventListener("DOMContentLoaded", () => {
     success.classList.add("open");
     success.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
-    window.history.replaceState({}, "", "checkout/");
+    window.history.replaceState({}, "", "/checkout/");
   } else if (params.get("cancelled") === "1") {
     const note = document.getElementById("cancelledNote");
     if (note) note.hidden = false;
-    window.history.replaceState({}, "", "checkout/");
+    window.history.replaceState({}, "", "/checkout/");
   }
 
   placeBtn.addEventListener("click", async () => {
