@@ -137,7 +137,9 @@ em { font-style: italic; color: var(--accent); font-weight: 500; }
   color: var(--green-dark);
   transition: color 0.4s;
 }
+.nav__by { font-weight: 400; color: var(--muted); font-style: italic; }
 .nav:not(.scrolled) .nav__name { color: var(--cream); }
+.nav:not(.scrolled) .nav__by { color: rgba(245, 243, 235, 0.75); }
 
 .nav__links { display: flex; align-items: center; gap: 32px; }
 .nav__links a {
@@ -863,6 +865,7 @@ a.product-card__btn { text-decoration: none; }
   /* 16px inputs prevent iOS auto-zoom on focus */
   .field input, .field select, .field textarea { font-size: 16px; }
   .product-card__btn { padding: 11px 18px; }
+  .nav__by { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
