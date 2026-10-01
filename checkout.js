@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let cart = JSON.parse(localStorage.getItem("rn_cart") || "[]");
   const fmt = (n) => "£" + n.toLocaleString("en-GB");
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   /* ---------- Render summary ---------- */
   const summaryItems = document.getElementById("summaryItems");
@@ -103,9 +104,28 @@ document.addEventListener("DOMContentLoaded", () => {
   // Returning from Stripe
   const params = new URLSearchParams(window.location.search);
   if (params.get("paid") === "1") {
-    orderRef.textContent = params.get("ref") || "";
+    const ref = params.get("ref") || "";
+    orderRef.textContent = ref;
     cart = [];
     localStorage.setItem("rn_cart", "[]");
+
+    // Full order details were stashed before the redirect to Stripe
+    try {
+      const pending = JSON.parse(localStorage.getItem("rn_last_order") || "null");
+      const details = document.getElementById("successDetails");
+      if (pending && pending.ref === ref && details) {
+        details.innerHTML = `
+          ${pending.items.map((i) => `<div class="success__row"><span>${esc(i.name)} × ${i.qty}</span><span>${fmt(i.price * i.qty)}</span></div>`).join("")}
+          <div class="success__row"><span>Delivery — ${esc(pending.delivery)}</span><span>${pending.delivery_price === 0 ? "Free" : fmt(pending.delivery_price)}</span></div>
+          <div class="success__row success__row--total"><span>Total paid</span><span>${fmt(pending.total)}</span></div>
+          ${pending.name ? `<p class="success__meta">Ordered by ${esc(pending.name)}${pending.email ? ` · ${esc(pending.email)}` : ""}</p>` : ""}
+          ${pending.address ? `<p class="success__meta">Delivering to: ${esc(pending.address)}</p>` : ""}
+          <p class="success__meta">Keep a note of your order ref — we'll be in touch shortly to arrange delivery.</p>`;
+        details.hidden = false;
+        localStorage.removeItem("rn_last_order");
+      }
+    } catch { /* fall back to the plain confirmation */ }
+
     success.classList.add("open");
     success.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
@@ -156,6 +176,25 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || "Checkout failed");
+
+      // Remember the order so the confirmation screen can show full details
+      const orderItems = cart.map((i) => {
+        const p = products.find((x) => x.id === i.id);
+        return p ? { name: p.name, qty: i.qty, price: Number(p.price) } : null;
+      }).filter(Boolean);
+      const subtotal = orderItems.reduce((s, i) => s + i.price * i.qty, 0);
+      const deliveryPrice = Number(selectedOpt ? selectedOpt.value : 0) || 0;
+      localStorage.setItem("rn_last_order", JSON.stringify({
+        ref: data.ref,
+        name: val("cName"),
+        email: val("cEmail"),
+        address: [val("cAddr1"), val("cAddr2"), val("cTown"), val("cPostcode")].filter(Boolean).join(", "),
+        delivery: selectedOpt ? selectedOpt.textContent.split(" — ")[0] : "Delivery",
+        delivery_price: deliveryPrice,
+        items: orderItems,
+        total: subtotal + deliveryPrice,
+      }));
+
       window.location.href = data.url;
     } catch (e) {
       placeBtn.disabled = false;
