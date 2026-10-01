@@ -20,6 +20,17 @@
       margin-bottom: 40px; flex-wrap: wrap; gap: 16px;
     }
     .dashboard__title { font-family: "Fraunces", serif; font-size: 2rem; color: var(--green-dark); }
+    .dashboard__sub { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
+    .panel-hint { color: var(--muted); font-size: 0.92rem; margin-bottom: 22px; max-width: 660px; line-height: 1.6; }
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--green-dark); color: var(--cream); padding: 12px 26px;
+      border-radius: 100px; font-size: 0.9rem; font-weight: 600;
+      opacity: 0; pointer-events: none; transition: all 0.3s var(--ease);
+      z-index: 500; box-shadow: var(--shadow-sm);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast--error { background: #a03a3a; }
     .dashboard__actions { display: flex; gap: 12px; align-items: center; }
     .dashboard__tabs { display: flex; gap: 0; margin-bottom: 30px; border-bottom: 2px solid var(--line); }
     .dashboard__tab {
@@ -85,6 +96,7 @@
       cursor: pointer; color: var(--green-dark); transition: all 0.25s;
     }
     .enquiry-card__btn:hover { border-color: var(--green); background: var(--green); color: var(--cream); }
+    a.enquiry-card__btn { text-decoration: none; display: inline-flex; align-items: center; }
     .enquiry-card__btn--danger { border-color: #c0392b; color: #c0392b; }
     .enquiry-card__btn--danger:hover { border-color: #c0392b; background: #c0392b; color: var(--white); }
 
@@ -181,10 +193,13 @@
   <main class="dashboard">
     <div class="container">
       <div class="dashboard__header">
-        <h1 class="dashboard__title">Dashboard</h1>
+        <div>
+          <h1 class="dashboard__title">Shop admin</h1>
+          <p class="dashboard__sub">Manage orders, enquiries, products and site content.</p>
+        </div>
         <div class="dashboard__actions">
-          <a href="../" class="btn btn--ghost" style="padding:10px 22px;font-size:0.88rem;">View site</a>
-          <button class="btn btn--ghost" id="logoutBtn" style="padding:10px 22px;font-size:0.88rem;">Log out</button>
+          <a href="../" class="btn btn--outline" style="padding:10px 22px;font-size:0.88rem;">View site</a>
+          <button class="btn btn--outline" id="logoutBtn" style="padding:10px 22px;font-size:0.88rem;">Log out</button>
         </div>
       </div>
 
@@ -200,12 +215,13 @@
         <button class="dashboard__tab" data-tab="products">Products</button>
         <button class="dashboard__tab" data-tab="gallery">Gallery</button>
         <button class="dashboard__tab" data-tab="delivery">Delivery</button>
-        <button class="dashboard__tab" data-tab="faq">FAQ Editor</button>
+        <button class="dashboard__tab" data-tab="faq">FAQs</button>
         <button class="dashboard__tab" data-tab="settings">Settings</button>
       </div>
 
       <!-- Orders panel -->
       <div class="dashboard__panel active" data-panel="orders">
+        <p class="panel-hint">Orders placed on the site appear here. Mark them confirmed once you've seen them, completed once delivered — and refund or cancel where needed.</p>
         <div class="enquiry-filters" id="orderFilters">
           <button class="enquiry-filter active" data-order-filter="all">All</button>
           <button class="enquiry-filter" data-order-filter="new">New</button>
@@ -222,6 +238,7 @@
 
       <!-- Enquiries panel -->
       <div class="dashboard__panel" data-panel="enquiries">
+        <p class="panel-hint">Every message from the contact form lands here. Click an email address to reply, and use the status buttons to keep track of where you're up to.</p>
         <div class="enquiry-filters" id="enquiryFilters">
           <button class="enquiry-filter active" data-filter="all">All</button>
           <button class="enquiry-filter" data-filter="renew">Renewals</button>
@@ -236,6 +253,7 @@
 
       <!-- Products panel -->
       <div class="dashboard__panel" data-panel="products">
+        <p class="panel-hint">The pieces for sale on the site. Set stock to 0 to mark a piece as sold — or tick "Enquire about me" to show an enquiry button instead of a price.</p>
         <div id="productsList">
           <p class="admin-login__note">Loading products…</p>
         </div>
@@ -244,6 +262,7 @@
 
       <!-- Gallery panel -->
       <div class="dashboard__panel" data-panel="gallery">
+        <p class="panel-hint">Photos shown in the site's Gallery. Type a category (e.g. Bedsides, Tallboys) — new categories automatically become filter buttons for visitors.</p>
         <div id="galleryList">
           <p class="admin-login__note">Loading gallery…</p>
         </div>
@@ -253,6 +272,7 @@
 
       <!-- Delivery panel -->
       <div class="dashboard__panel" data-panel="delivery">
+        <p class="panel-hint">The delivery choices customers see at checkout. A £0 price shows as "Free" — handy for local collection.</p>
         <div id="deliveryList">
           <p class="admin-login__note">Loading delivery options…</p>
         </div>
@@ -261,6 +281,7 @@
 
       <!-- FAQ panel -->
       <div class="dashboard__panel" data-panel="faq">
+        <p class="panel-hint">Questions and answers shown on the site. Reorder using the sort numbers — lowest appears first.</p>
         <div id="faqEditor">
           <p class="admin-login__note">Loading FAQ editor…</p>
         </div>
@@ -293,6 +314,8 @@
       </div>
     </div>
   </main>
+
+  <div class="toast" id="toast" role="status"></div>
 
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="../supabase-config.js"></script>

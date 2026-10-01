@@ -29,6 +29,17 @@
 
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+  /* ---------- Toast feedback ---------- */
+  const toastEl = document.getElementById("toast");
+  const toast = (msg, isError = false) => {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.toggle("toast--error", isError);
+    toastEl.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toastEl.classList.remove("show"), 2600);
+  };
+
   /* ---------- Orders ---------- */
   const ordersList = document.getElementById("ordersList");
   const fmt = (n) => "£" + Number(n || 0).toLocaleString("en-GB");
@@ -82,6 +93,7 @@
             <div class="order-card__total"><span>Total</span><span>${fmt(o.total)}</span></div>
           </div>
           <div class="enquiry-card__actions">
+            <a class="enquiry-card__btn" href="mailto:${esc(o.email)}?subject=${encodeURIComponent(`Your Redo & Renew order ${o.ref}`)}">Email customer</a>
             <button class="enquiry-card__btn" data-order-status="confirmed" data-id="${o.id}">Mark confirmed</button>
             <button class="enquiry-card__btn" data-order-status="completed" data-id="${o.id}">Mark completed</button>
             <button class="enquiry-card__btn" data-order-status="new" data-id="${o.id}">Mark as new</button>
@@ -103,6 +115,7 @@
       btn.addEventListener("click", async () => {
         if (!confirm("Delete this order? This can't be undone.")) return;
         await supabase.from("orders").delete().eq("id", btn.dataset.orderDelete);
+        toast("Order deleted");
         loadOrders();
       });
     });
@@ -258,6 +271,7 @@
             </div>
           ` : ""}
           <div class="enquiry-card__actions">
+            <a class="enquiry-card__btn" href="mailto:${esc(e.email)}?subject=${encodeURIComponent("Re: your enquiry — Redo & Renew")}">Reply by email</a>
             <button class="enquiry-card__btn" data-status="read" data-id="${e.id}">Mark as read</button>
             <button class="enquiry-card__btn" data-status="replied" data-id="${e.id}">Mark as replied</button>
             <button class="enquiry-card__btn" data-status="new" data-id="${e.id}">Mark as new</button>
@@ -286,6 +300,7 @@
       btn.addEventListener("click", async () => {
         if (!confirm("Delete this enquiry? This can't be undone.")) return;
         await supabase.from("enquiries").delete().eq("id", btn.dataset.del);
+        toast("Enquiry deleted");
         loadEnquiries();
       });
     });
@@ -446,7 +461,10 @@
 
     productsList.querySelectorAll("[data-delete]").forEach((btn) => {
       btn.addEventListener("click", async () => {
+        const name = btn.closest(".faq-editor__item").querySelector('[data-field="name"]').value;
+        if (!confirm(`Delete "${name || "this piece"}" from the shop? This can't be undone.`)) return;
         await supabase.from("products").delete().eq("id", btn.dataset.delete);
+        toast("Product deleted");
         loadProducts();
       });
     });
@@ -518,7 +536,9 @@
 
     deliveryList.querySelectorAll("[data-delete]").forEach((btn) => {
       btn.addEventListener("click", async () => {
+        if (!confirm("Delete this delivery option? Customers won't see it at checkout anymore.")) return;
         await supabase.from("delivery_options").delete().eq("id", btn.dataset.delete);
+        toast("Delivery option deleted");
         loadDelivery();
       });
     });
@@ -656,8 +676,10 @@
 
     faqEditor.querySelectorAll("[data-delete]").forEach((btn) => {
       btn.addEventListener("click", async () => {
+        if (!confirm("Delete this question?")) return;
         const id = btn.dataset.delete;
         await supabase.from("faq").delete().eq("id", id);
+        toast("Question deleted");
         faqItems = faqItems.filter((i) => i.id !== Number(id));
         renderFaqEditor();
       });
@@ -749,6 +771,7 @@
           const m = g.image_url.match(/gallery-photos\/(.+)$/);
           if (m) await supabase.storage.from("gallery-photos").remove([decodeURIComponent(m[1])]);
         }
+        toast("Photo removed");
         loadGalleryAdmin();
       });
     });
