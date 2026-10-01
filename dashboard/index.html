@@ -20,6 +20,7 @@
       margin-bottom: 40px; flex-wrap: wrap; gap: 16px;
     }
     .dashboard__title { font-family: "Fraunces", serif; font-size: 2rem; color: var(--green-dark); }
+    .dashboard__logo { width: 48px; height: 48px; object-fit: cover; border-radius: 50%; border: 2px solid var(--white); box-shadow: var(--shadow-sm); flex-shrink: 0; }
     .dashboard__sub { color: var(--muted); font-size: 0.92rem; margin-top: 4px; }
     .panel-hint { color: var(--muted); font-size: 0.92rem; margin-bottom: 22px; max-width: 660px; line-height: 1.6; }
     .toast {
@@ -39,8 +40,8 @@
       color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px;
       transition: all 0.3s var(--ease);
     }
-    .dashboard__tab:hover { color: var(--green-dark); }
-    .dashboard__tab.active { color: var(--green); border-bottom-color: var(--green); }
+    .dashboard__tab:hover { color: var(--green-dark); background: rgba(47, 93, 67, 0.05); border-radius: 10px 10px 0 0; }
+    .dashboard__tab.active { color: var(--green); border-bottom-color: var(--green); background: rgba(47, 93, 67, 0.06); border-radius: 10px 10px 0 0; }
     .dashboard__panel { display: none; }
     .dashboard__panel.active { display: block; }
 
@@ -135,7 +136,11 @@
     .stat-card {
       background: var(--white); border-radius: var(--radius); padding: 22px 24px;
       box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 2px;
+      border-top: 3px solid var(--accent);
+      transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
     }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    .stat-card__icon { font-size: 1.3rem; margin-bottom: 6px; }
     .stat-card__num { font-family: "Fraunces", serif; font-size: 2rem; font-weight: 600; color: var(--green-dark); }
     .stat-card__label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 
@@ -193,9 +198,12 @@
   <main class="dashboard">
     <div class="container">
       <div class="dashboard__header">
-        <div>
-          <h1 class="dashboard__title">Shop admin</h1>
-          <p class="dashboard__sub">Manage orders, enquiries, products and site content.</p>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <img src="../assets/img/logo.jpg" alt="" class="dashboard__logo" />
+          <div>
+            <h1 class="dashboard__title">Shop admin</h1>
+            <p class="dashboard__sub">Manage orders, enquiries, products and site content.</p>
+          </div>
         </div>
         <div class="dashboard__actions">
           <a href="../" class="btn btn--outline" style="padding:10px 22px;font-size:0.88rem;">View site</a>
@@ -204,19 +212,19 @@
       </div>
 
       <div class="dashboard__stats">
-        <div class="stat-card"><span class="stat-card__num" id="statOrders">–</span><span class="stat-card__label">Orders</span></div>
-        <div class="stat-card"><span class="stat-card__num" id="statRevenue">–</span><span class="stat-card__label">Revenue</span></div>
-        <div class="stat-card"><span class="stat-card__num" id="statNewEnquiries">–</span><span class="stat-card__label">New enquiries</span></div>
+        <div class="stat-card"><span class="stat-card__icon">📦</span><span class="stat-card__num" id="statOrders">–</span><span class="stat-card__label">Orders</span></div>
+        <div class="stat-card"><span class="stat-card__icon">💷</span><span class="stat-card__num" id="statRevenue">–</span><span class="stat-card__label">Revenue</span></div>
+        <div class="stat-card"><span class="stat-card__icon">✉️</span><span class="stat-card__num" id="statNewEnquiries">–</span><span class="stat-card__label">New enquiries</span></div>
       </div>
 
       <div class="dashboard__tabs">
-        <button class="dashboard__tab active" data-tab="orders">Orders <span class="tab-count" id="countOrders"></span></button>
-        <button class="dashboard__tab" data-tab="enquiries">Enquiries <span class="tab-count" id="countEnquiries"></span></button>
-        <button class="dashboard__tab" data-tab="products">Products</button>
-        <button class="dashboard__tab" data-tab="gallery">Gallery</button>
-        <button class="dashboard__tab" data-tab="delivery">Delivery</button>
-        <button class="dashboard__tab" data-tab="faq">FAQs</button>
-        <button class="dashboard__tab" data-tab="settings">Settings</button>
+        <button class="dashboard__tab active" data-tab="orders">📦 Orders <span class="tab-count" id="countOrders"></span></button>
+        <button class="dashboard__tab" data-tab="enquiries">✉️ Enquiries <span class="tab-count" id="countEnquiries"></span></button>
+        <button class="dashboard__tab" data-tab="products">🪑 Products</button>
+        <button class="dashboard__tab" data-tab="gallery">🖼️ Gallery</button>
+        <button class="dashboard__tab" data-tab="delivery">🚚 Delivery</button>
+        <button class="dashboard__tab" data-tab="faq">❓ FAQs</button>
+        <button class="dashboard__tab" data-tab="settings">⚙️ Settings</button>
       </div>
 
       <!-- Orders panel -->

@@ -508,6 +508,14 @@ em { font-style: italic; color: var(--accent); font-weight: 500; }
 .footer__brand span { font-style: italic; color: rgba(245, 243, 235, 0.7); }
 .footer__brand p { font-size: 0.85rem; color: rgba(245, 243, 235, 0.6); margin-top: 2px; }
 .footer__tag { font-family: "Fraunces", serif; font-style: italic; font-size: 1.15rem; color: rgba(245, 243, 235, 0.85); }
+.footer__socials { display: flex; gap: 12px; }
+.footer__social {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1.5px solid rgba(245, 243, 235, 0.35); color: var(--cream);
+  transition: all 0.3s var(--ease);
+}
+.footer__social:hover { background: var(--accent); border-color: var(--accent); color: var(--green-dark); transform: translateY(-2px); }
 .footer__legal { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; }
 .footer__legal a {
   color: rgba(245, 243, 235, 0.75);
