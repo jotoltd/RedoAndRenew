@@ -60,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ---------- Gallery (categories + lightbox) ---------- */
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const galleryGrid = document.getElementById("galleryGrid");
-  const galleryFilters = document.getElementById("galleryFilters");
   const lb = document.getElementById("lightbox");
 
   if (galleryGrid && lb) {
@@ -70,6 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const lbNext = document.getElementById("lbNext");
     let current = 0;
     let visibleImgs = [];
+    let galleryByCat = {}; // category -> photos in that category, in sort order
 
     const showImage = (i) => {
       if (!visibleImgs.length) return;
@@ -79,6 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     const openLb = (i) => {
       showImage(i);
+      lbPrev.style.display = lbNext.style.display = visibleImgs.length > 1 ? "" : "none";
       lb.classList.add("open");
       lb.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
@@ -89,27 +90,26 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.style.overflow = "";
     };
 
-    // lightbox indexes only the currently-visible items
+    // each tile is a category; clicking it opens the lightbox on that category's photos
     const bindGalleryItems = () => {
-      visibleImgs = Array.from(
-        galleryGrid.querySelectorAll(".gallery__item:not(.gallery__item--hidden) img")
-      );
+      const hasGroups = Object.keys(galleryByCat).length > 0;
+      const allImgs = Array.from(galleryGrid.querySelectorAll(".gallery__item img"));
       galleryGrid.querySelectorAll(".gallery__item").forEach((fig) => {
         fig.onclick = () => {
-          const i = visibleImgs.indexOf(fig.querySelector("img"));
-          if (i >= 0) openLb(i);
+          const photos = galleryByCat[fig.dataset.cat];
+          if (photos && photos.length) {
+            visibleImgs = photos.map((p) => ({
+              src: p.image_url,
+              alt: p.title || "Renewed furniture piece",
+            }));
+            openLb(0);
+          } else if (!hasGroups) {
+            visibleImgs = allImgs;
+            const i = allImgs.indexOf(fig.querySelector("img"));
+            if (i >= 0) openLb(i);
+          }
         };
       });
-    };
-
-    const applyGalleryFilter = (cat) => {
-      galleryFilters.querySelectorAll(".gallery__filter").forEach((b) =>
-        b.classList.toggle("active", b.dataset.cat === cat)
-      );
-      galleryGrid.querySelectorAll(".gallery__item").forEach((fig) => {
-        fig.classList.toggle("gallery__item--hidden", cat !== "all" && fig.dataset.cat !== cat);
-      });
-      bindGalleryItems();
     };
 
     // same mosaic rhythm as the original static grid
@@ -118,24 +118,23 @@ document.addEventListener("DOMContentLoaded", () => {
         : i % 7 === 2 || i % 7 === 6 ? " gallery__item--wide" : "";
 
     const renderGallery = (items) => {
-      galleryGrid.innerHTML = items.map((g, i) => `
-        <figure class="gallery__item${spanClass(i)} reveal" data-cat="${esc(g.category || "Other")}">
-          <img src="${esc(g.image_url)}" alt="${esc(g.title || "Renewed furniture piece")}" loading="lazy" />
-          ${g.category ? `<figcaption class="gallery__cat">${esc(g.category)}</figcaption>` : ""}
-        </figure>`).join("");
+      const cats = [...new Set(items.map((g) => g.category || "Other"))];
+      galleryByCat = {};
+      cats.forEach((c) => { galleryByCat[c] = []; });
+      items.forEach((g) => galleryByCat[g.category || "Other"].push(g));
+      galleryGrid.innerHTML = cats.map((cat, i) => {
+        const photos = galleryByCat[cat];
+        const cover = photos[0];
+        return `
+        <figure class="gallery__item${spanClass(i)} reveal" data-cat="${esc(cat)}">
+          <img src="${esc(cover.image_url)}" alt="${esc(cover.title || "Renewed furniture piece")}" loading="lazy" />
+          <figcaption class="gallery__cat">${esc(cat)}${photos.length > 1 ? ` · ${photos.length} photos` : ""}</figcaption>
+        </figure>`;
+      }).join("");
       galleryGrid.querySelectorAll(".reveal").forEach((el) => {
         if (io) io.observe(el);
         else el.classList.add("in");
       });
-    };
-
-    const renderGalleryFilters = (cats) => {
-      galleryFilters.innerHTML = ["all", ...cats].map((c) =>
-        `<button class="gallery__filter${c === "all" ? " active" : ""}" data-cat="${esc(c)}">${c === "all" ? "All" : esc(c)}</button>`
-      ).join("");
-      galleryFilters.querySelectorAll(".gallery__filter").forEach((b) =>
-        b.addEventListener("click", () => applyGalleryFilter(b.dataset.cat))
-      );
     };
 
     const loadGallery = async () => {
@@ -146,8 +145,6 @@ document.addEventListener("DOMContentLoaded", () => {
           .order("sort_order", { ascending: true });
         if (data && data.length) {
           renderGallery(data);
-          const cats = [...new Set(data.map((g) => g.category).filter(Boolean))];
-          if (cats.length > 1) renderGalleryFilters(cats);
         }
       }
       bindGalleryItems();
