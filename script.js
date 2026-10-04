@@ -191,8 +191,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="product-card__body">
           <h3 class="product-card__title"><a href="product/?id=${p.id}">${p.name}</a></h3>
           <p class="product-card__desc">${p.description || ""}</p>
+          <a class="product-card__more" href="product/?id=${p.id}" hidden>Read more →</a>
           ${stockLine}
-          <p class="product-card__preloved">All pieces are preloved and lovingly upcycled. As with any previously loved furniture, you may notice some minor signs of its past life. These little imperfections are part of the character, charm and authenticity of each unique piece.</p>
           <div class="product-card__foot">
             ${enquireOnly
               ? `<span class="product-card__price product-card__price--enquire">Ready to be upcycled</span>
@@ -203,6 +203,13 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       </article>
     `}).join("");
+    // show "Read more" only when the description is actually clamped
+    shopGrid.querySelectorAll(".product-card__desc").forEach((desc) => {
+      if (desc.scrollHeight > desc.clientHeight + 1) {
+        const more = desc.parentElement.querySelector(".product-card__more");
+        if (more) more.hidden = false;
+      }
+    });
     // re-observe newly added reveal cards
     shopGrid.querySelectorAll(".reveal").forEach((el) => {
       if ("IntersectionObserver" in window) io.observe(el);

@@ -23,14 +23,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (!id || typeof supabase === "undefined") { showMissing(); return; }
 
-  const [{ data: p, error }, { data: stockSetting }] = await Promise.all([
+  const [{ data: p, error }, { data: stockSetting }, { data: hideSetting }] = await Promise.all([
     supabase.from("products").select("*").eq("id", id).single(),
-    supabase.from("settings").select("value").eq("key", "show_stock").maybeSingle()
+    supabase.from("settings").select("value").eq("key", "show_stock").maybeSingle(),
+    supabase.from("settings").select("value").eq("key", "hide_preloved_ids").maybeSingle()
   ]);
 
   if (error || !p) { showMissing(); return; }
 
   const showStock = !stockSetting || stockSetting.value !== "false";
+  const hidePreloved = hideSetting && hideSetting.value
+    ? hideSetting.value.split(",").includes(String(p.id))
+    : false;
   const soldOut = p.sold || (p.stock != null && p.stock <= 0);
   const enquireOnly = !soldOut && (p.enquire_only || !(Number(p.price) > 0));
   const stockNote = showStock && !soldOut && p.stock != null
@@ -60,7 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         : `<p class="product-page__price">${fmt(p.price)}</p>`}
       ${stockNote ? `<p class="product-page__stock">${stockNote}</p>` : ""}
       ${p.description ? `<p class="product-page__desc">${esc(p.description)}</p>` : ""}
-      <p class="product-page__preloved">All pieces are preloved and lovingly upcycled. As with any previously loved furniture, you may notice some minor signs of its past life. These little imperfections are part of the character, charm and authenticity of each unique piece.</p>
+      ${hidePreloved ? "" : '<p class="product-page__preloved">All pieces are preloved and lovingly upcycled. As with any previously loved furniture, you may notice some minor signs of its past life. These little imperfections are part of the character, charm and authenticity of each unique piece.</p>'}
       <div class="product-page__actions">
         ${enquireOnly
           ? `<a class="btn btn--primary" href="/?enquire=purchase&piece=${encodeURIComponent(p.name)}#contact">Enquire about me</a>`

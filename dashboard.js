@@ -339,6 +339,7 @@
   const productsList = document.getElementById("productsList");
   const addProductBtn = document.getElementById("addProductBtn");
   let productItems = [];
+  let hidePrelovedIds = new Set();
   const galleryMap = {}; // product id -> working array of image URLs
 
   const renderGallery = (row, id) => {
@@ -386,6 +387,7 @@
           <label class="editor-field"><span>Stock (0 = sold)</span><input type="number" value="${p.stock ?? 1}" data-field="stock" min="0" step="1" /></label>
         </div>
         <label class="product-item__sold"><input type="checkbox" data-field="enquire_only" ${p.enquire_only ? "checked" : ""} /> “Enquire about me” — show an enquiry button instead of a price (for pieces ready to be upcycled)</label>
+        <label class="product-item__sold"><input type="checkbox" data-field="hide_preloved" ${hidePrelovedIds.has(String(p.id)) ? "checked" : ""} /> Hide the “preloved &amp; lovingly upcycled” note (for kits and supplies)</label>
         <div class="editor-field"><span>Photos (first one is the cover)</span>
           <div class="product-photos" data-gallery="${p.id}"></div>
           <div class="product-item__grid" style="margin-top:8px;">
@@ -453,6 +455,9 @@
         };
         if (!updates.name) return;
         await supabase.from("products").update(updates).eq("id", id);
+        if (row.querySelector('[data-field="hide_preloved"]').checked) hidePrelovedIds.add(String(id));
+        else hidePrelovedIds.delete(String(id));
+        await supabase.from("settings").upsert({ key: "hide_preloved_ids", value: [...hidePrelovedIds].join(",") });
         btn.textContent = "Saved!";
         setTimeout(() => (btn.textContent = "Save"), 1500);
         loadProducts();
@@ -471,10 +476,11 @@
   };
 
   const loadProducts = async () => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const [{ data, error }, { data: hp }] = await Promise.all([
+      supabase.from("products").select("*").order("created_at", { ascending: false }),
+      supabase.from("settings").select("value").eq("key", "hide_preloved_ids").maybeSingle()
+    ]);
+    hidePrelovedIds = new Set((hp && hp.value ? hp.value.split(",") : []).filter(Boolean));
     if (error) {
       productsList.innerHTML = '<p class="admin-login__note">Error loading products.</p>';
       return;
