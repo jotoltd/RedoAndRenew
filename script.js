@@ -35,6 +35,31 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
+  /* ---------- Deep-link anchor fix ----------
+     Hash links (e.g. ../#shop from the product/checkout pages) are
+     resolved before async content renders and images load, so layout
+     shifts can leave the page scrolled short of the target — on mobile
+     the user lands on the gallery instead of the shop. Re-assert the
+     scroll position as things settle, until the user scrolls. */
+  const hashTarget = location.hash
+    ? document.getElementById(location.hash.slice(1))
+    : null;
+  let userScrolled = false;
+  ["wheel", "touchstart", "keydown"].forEach((evt) =>
+    window.addEventListener(evt, () => { userScrolled = true; }, { once: true, passive: true })
+  );
+  const scrollToHashTarget = () => {
+    if (!hashTarget || userScrolled) return;
+    const root = document.documentElement;
+    root.style.scrollBehavior = "auto"; // jump instantly, ignoring CSS smooth scroll
+    hashTarget.scrollIntoView();
+    root.style.scrollBehavior = "";
+  };
+  if (hashTarget) {
+    scrollToHashTarget();
+    window.addEventListener("load", scrollToHashTarget, { once: true });
+  }
+
   /* ---------- Reveal on scroll ---------- */
   const reveals = document.querySelectorAll(".reveal");
   let io = null;
@@ -149,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       bindGalleryItems();
     };
-    loadGallery();
+    loadGallery().then(scrollToHashTarget);
 
     lbClose.addEventListener("click", closeLb);
     lb.addEventListener("click", (e) => { if (e.target === lb) closeLb(); });
@@ -229,7 +254,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ]);
     showStockCount = !stockSetting || stockSetting.value !== "false";
     if (!error && data) {
-      products = data;
+      // positioned pieces first (lowest number first), then newest-first
+      products = data.sort((a, b) =>
+        (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity) ||
+        new Date(b.created_at) - new Date(a.created_at));
       // drop stale cart entries that no longer match a real product
       cart = cart.filter((i) => products.some((p) => p.id === i.id));
       renderCart();
@@ -359,7 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // render cart state on load, then pull products from Supabase
   renderCart();
-  loadProducts();
+  loadProducts().then(scrollToHashTarget);
 
   /* ---------- FAQ (loaded from Supabase) ---------- */
   const faqList = document.getElementById("faqList");

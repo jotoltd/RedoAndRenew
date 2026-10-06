@@ -339,6 +339,7 @@
   const productsList = document.getElementById("productsList");
   const addProductBtn = document.getElementById("addProductBtn");
   let productItems = [];
+  let productSortable = false; // products table has a sort_order column
   let hidePrelovedIds = new Set();
   const galleryMap = {}; // product id -> working array of image URLs
 
@@ -382,9 +383,10 @@
           </div>
         </div>
         <label class="editor-field"><span>Description</span><textarea data-field="description">${esc(p.description || "")}</textarea></label>
-        <div class="product-item__grid">
+        <div class="product-item__grid" style="grid-template-columns:1fr 110px 110px;">
           <label class="editor-field"><span>Badge (optional)</span><input type="text" value="${esc(p.tag || "")}" placeholder="e.g. New, One of a kind" data-field="tag" /></label>
           <label class="editor-field"><span>Stock (0 = sold)</span><input type="number" value="${p.stock ?? 1}" data-field="stock" min="0" step="1" /></label>
+          <label class="editor-field"><span>Position${productSortable ? "" : " — needs sort_order column"}</span><input type="number" value="${p.sort_order ?? ""}" data-field="sort_order" min="0" step="1" placeholder="—" ${productSortable ? "" : "disabled"} /></label>
         </div>
         <label class="product-item__sold"><input type="checkbox" data-field="enquire_only" ${p.enquire_only ? "checked" : ""} /> “Enquire about me” — show an enquiry button instead of a price (for pieces ready to be upcycled)</label>
         <label class="product-item__sold"><input type="checkbox" data-field="hide_preloved" ${hidePrelovedIds.has(String(p.id)) ? "checked" : ""} /> Hide the “preloved &amp; lovingly upcycled” note (for kits and supplies)</label>
@@ -453,6 +455,7 @@
           sold: stock <= 0,
           enquire_only: row.querySelector('[data-field="enquire_only"]').checked
         };
+        if (productSortable) updates.sort_order = val("sort_order") === "" ? null : Number(val("sort_order"));
         if (!updates.name) return;
         await supabase.from("products").update(updates).eq("id", id);
         if (row.querySelector('[data-field="hide_preloved"]').checked) hidePrelovedIds.add(String(id));
@@ -476,23 +479,29 @@
   };
 
   const loadProducts = async () => {
-    const [{ data, error }, { data: hp }] = await Promise.all([
+    const [{ data, error }, { data: hp }, { error: soErr }] = await Promise.all([
       supabase.from("products").select("*").order("created_at", { ascending: false }),
-      supabase.from("settings").select("value").eq("key", "hide_preloved_ids").maybeSingle()
+      supabase.from("settings").select("value").eq("key", "hide_preloved_ids").maybeSingle(),
+      supabase.from("products").select("sort_order").limit(1)
     ]);
+    productSortable = !soErr;
     hidePrelovedIds = new Set((hp && hp.value ? hp.value.split(",") : []).filter(Boolean));
     if (error) {
       productsList.innerHTML = '<p class="admin-login__note">Error loading products.</p>';
       return;
     }
-    productItems = data || [];
+    // positioned pieces first (lowest number first), then newest-first
+    productItems = (data || []).sort((a, b) =>
+      (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity) ||
+      new Date(b.created_at) - new Date(a.created_at));
     renderProducts();
   };
 
   addProductBtn.addEventListener("click", async () => {
+    const nextOrder = productItems.length ? Math.max(...productItems.map((p) => p.sort_order || 0)) + 1 : 1;
     const { error } = await supabase
       .from("products")
-      .insert([{ name: "New piece", price: 0 }]);
+      .insert([{ name: "New piece", price: 0, ...(productSortable ? { sort_order: nextOrder } : {}) }]);
     if (!error) loadProducts();
   });
 
