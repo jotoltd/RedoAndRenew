@@ -275,6 +275,12 @@
         </div>
       </div>
       <form class="contact__form reveal" id="enquiryForm" novalidate>
+        <div class="form__success" id="formSuccess" role="status" aria-live="polite" tabindex="-1" hidden>
+          <div class="form__success-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <h3>Thank you for your enquiry</h3>
+          <p>Your enquiry has been sent successfully. I'll be in touch soon — please keep an eye on your inbox (and junk folder, just in case).</p>
+          <button type="button" class="btn btn--primary" id="formSuccessReset">Send another enquiry</button>
+        </div>
         <div class="field form-intro">
           <label for="service">What can I help you with?</label>
           <select id="service" name="service" required>

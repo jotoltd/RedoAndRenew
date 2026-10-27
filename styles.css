@@ -458,6 +458,15 @@ em { font-style: italic; color: var(--accent); font-weight: 500; }
 .field input[type="file"] { padding: 10px; font-size: 0.88rem; }
 .form-contact-details h3 { margin-top: 18px; }
 .form__disclaimer { color: var(--muted); font-size: 0.78rem; line-height: 1.55; margin-top: 18px; text-align: center; }
+.contact__form.is-sent > :not(.form__success) { display: none; }
+.form__success { text-align: center; padding: 24px 8px; outline: none; }
+.form__success-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 64px; height: 64px; margin-bottom: 18px;
+  border-radius: 50%; background: var(--green); color: var(--cream);
+}
+.form__success h3 { font-family: "Fraunces", serif; font-size: 1.6rem; color: var(--green-dark); margin-bottom: 12px; }
+.form__success p { color: var(--muted); line-height: 1.65; max-width: 420px; margin: 0 auto 24px; }
 .form__note { margin-top: 14px; font-size: 0.9rem; font-weight: 600; color: var(--green); text-align: center; min-height: 1.2em; }
 .field label {
   display: block;
