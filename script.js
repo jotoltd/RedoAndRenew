@@ -418,6 +418,8 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ---------- Enquiry form ---------- */
   const form = document.getElementById("enquiryForm");
   const note = document.getElementById("formNote");
+  const success = document.getElementById("formSuccess");
+  const successReset = document.getElementById("formSuccessReset");
   const enquiryType = document.getElementById("service");
   if (!form || !enquiryType) return;
   const panels = document.querySelectorAll("[data-panel]");
@@ -533,9 +535,18 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    note.style.color = "var(--green)";
-    note.textContent = "Thank you! Your enquiry has been sent — we'll be in touch soon.";
+    note.textContent = "";
     form.reset();
     updateEnquiryType();
+    form.classList.add("is-sent");
+    success.hidden = false;
+    success.scrollIntoView({ behavior: "smooth", block: "center" });
+    success.focus({ preventScroll: true });
+  });
+
+  successReset.addEventListener("click", () => {
+    success.hidden = true;
+    form.classList.remove("is-sent");
+    enquiryType.focus();
   });
 });
