@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (cart.length === 0) {
       summaryItems.innerHTML = `<div class="summary__empty">Your basket is empty.<br /><a href="../#shop">Browse the shop →</a></div>`;
       sumSubtotal.textContent = "£0";
-      sumDelivery.textContent = "Free";
+      sumDelivery.textContent = "Enquire";
       sumTotal.textContent = "£0";
       placeTotal.textContent = "£0";
       document.getElementById("placeOrder").disabled = true;
@@ -49,11 +49,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const p = products.find((x) => x.id === i.id);
       return p ? s + p.price * i.qty : s;
     }, 0);
-    const delivery = Number(deliverySelect.value) || 0;
-    const total = subtotal + delivery;
+    const total = subtotal;
 
     sumSubtotal.textContent = fmt(subtotal);
-    sumDelivery.textContent = delivery === 0 ? "Free" : fmt(delivery);
+    sumDelivery.textContent = "Enquire";
     sumTotal.textContent = fmt(total);
     placeTotal.textContent = fmt(total);
   };
@@ -71,25 +70,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const { data: deliv } = await supabase
         .from("delivery_options")
-        .select("*")
+        .select("id,label")
         .eq("active", true)
         .order("sort_order", { ascending: true });
       if (deliv && deliv.length > 0) {
         deliverySelect.innerHTML = "";
         deliv.forEach((o) => {
           const opt = document.createElement("option");
-          opt.value = o.price;
+          opt.value = String(o.id);
           opt.dataset.id = o.id;
-          const price = Number(o.price);
-          opt.textContent = `${o.label} — ${price === 0 ? "Free" : "£" + price.toLocaleString("en-GB")}`;
+          opt.dataset.label = o.label;
+          opt.textContent = `${o.label} — Enquire`;
           deliverySelect.appendChild(opt);
         });
       }
     }
     if (deliverySelect.options.length === 0) {
       const opt = document.createElement("option");
-      opt.value = 0;
-      opt.textContent = "Delivery — Free";
+      opt.value = "0";
+      opt.dataset.label = "Delivery";
+      opt.textContent = "Delivery — Enquire";
       deliverySelect.appendChild(opt);
     }
     render();
@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (pending && pending.ref === ref && details) {
         details.innerHTML = `
           ${pending.items.map((i) => `<div class="success__row"><span>${esc(i.name)} × ${i.qty}</span><span>${fmt(i.price * i.qty)}</span></div>`).join("")}
-          <div class="success__row"><span>Delivery — ${esc(pending.delivery)}</span><span>${pending.delivery_price === 0 ? "Free" : fmt(pending.delivery_price)}</span></div>
+          <div class="success__row"><span>Delivery — ${esc(pending.delivery)}</span><span>${Number(pending.delivery_price) > 0 ? fmt(pending.delivery_price) : "Enquire"}</span></div>
           <div class="success__row success__row--total"><span>Total paid</span><span>${fmt(pending.total)}</span></div>
           ${pending.name ? `<p class="success__meta">Ordered by ${esc(pending.name)}${pending.email ? ` · ${esc(pending.email)}` : ""}</p>` : ""}
           ${pending.address ? `<p class="success__meta">Delivering to: ${esc(pending.address)}</p>` : ""}
@@ -183,16 +183,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return p ? { name: p.name, qty: i.qty, price: Number(p.price) } : null;
       }).filter(Boolean);
       const subtotal = orderItems.reduce((s, i) => s + i.price * i.qty, 0);
-      const deliveryPrice = Number(selectedOpt ? selectedOpt.value : 0) || 0;
       localStorage.setItem("rn_last_order", JSON.stringify({
         ref: data.ref,
         name: val("cName"),
         email: val("cEmail"),
         address: [val("cAddr1"), val("cAddr2"), val("cTown"), val("cPostcode")].filter(Boolean).join(", "),
-        delivery: selectedOpt ? selectedOpt.textContent.split(" — ")[0] : "Delivery",
-        delivery_price: deliveryPrice,
+        delivery: selectedOpt ? selectedOpt.dataset.label || "Delivery" : "Delivery",
+        delivery_price: 0,
         items: orderItems,
-        total: subtotal + deliveryPrice,
+        total: subtotal,
       }));
 
       window.location.href = data.url;

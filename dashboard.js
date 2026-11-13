@@ -89,7 +89,7 @@
           </div>
           <div class="order-card__items">
             ${items.map((i) => `<div class="order-card__item"><span>${esc(i.name || "Item")} × ${Number(i.qty) || 1}</span><span>${fmt((Number(i.price) || 0) * (Number(i.qty) || 1))}</span></div>`).join("")}
-            <div class="order-card__item"><span>Delivery</span><span>${Number(o.delivery_price) === 0 ? "Free" : fmt(o.delivery_price)}</span></div>
+            <div class="order-card__item"><span>Delivery</span><span>${Number(o.delivery_price) > 0 ? fmt(o.delivery_price) : "Enquire"}</span></div>
             <div class="order-card__total"><span>Total</span><span>${fmt(o.total)}</span></div>
           </div>
           <div class="enquiry-card__actions">
@@ -162,11 +162,11 @@
   const exportBtn = document.getElementById("exportOrdersBtn");
   if (exportBtn) {
     exportBtn.addEventListener("click", () => {
-      const rows = [["Ref", "Date", "Name", "Email", "Phone", "Address", "Delivery", "Items", "Subtotal", "Delivery £", "Total", "Paid", "Status"]];
+      const rows = [["Ref", "Date", "Name", "Email", "Phone", "Address", "Delivery", "Items", "Subtotal", "Delivery amount", "Total", "Paid", "Status"]];
       allOrders.forEach((o) => {
         const address = [o.address1, o.address2, o.town, o.postcode].filter(Boolean).join(", ");
         const itemList = (Array.isArray(o.items) ? o.items : []).map((i) => `${i.name || "Item"} x${i.qty || 1}`).join("; ");
-        rows.push([o.ref, new Date(o.created_at).toLocaleString("en-GB"), o.name, o.email, o.phone || "", address, o.delivery_method || "", itemList, o.subtotal, o.delivery_price, o.total, o.paid ? "Yes" : "No", o.status || "new"]);
+        rows.push([o.ref, new Date(o.created_at).toLocaleString("en-GB"), o.name, o.email, o.phone || "", address, o.delivery_method || "", itemList, o.subtotal, Number(o.delivery_price) > 0 ? o.delivery_price : "Enquire", o.total, o.paid ? "Yes" : "No", o.status || "new"]);
       });
       const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
       const a = document.createElement("a");
@@ -520,10 +520,7 @@
     deliveryList.innerHTML = deliveryItems.map((d) => `
       <div class="faq-editor__item" data-id="${d.id}">
         <label class="editor-field"><span>Label</span><input type="text" value="${esc(d.label)}" placeholder="e.g. UK courier" data-field="label" /></label>
-        <div class="product-item__grid">
-          <label class="editor-field"><span>Price (£) — 0 for free</span><input type="number" value="${d.price}" data-field="price" min="0" step="0.01" /></label>
-          <label class="editor-field"><span>Sort order</span><input type="number" value="${d.sort_order || 0}" data-field="sort_order" min="0" step="1" /></label>
-        </div>
+        <label class="editor-field"><span>Sort order</span><input type="number" value="${d.sort_order || 0}" data-field="sort_order" min="0" step="1" /></label>
         <label class="product-item__sold"><input type="checkbox" data-field="active" ${d.active !== false ? "checked" : ""} /> Visible at checkout</label>
         <div class="faq-editor__actions">
           <button class="faq-editor__btn faq-editor__btn--save" data-save="${d.id}">Save</button>
@@ -538,7 +535,7 @@
         const val = (f) => row.querySelector(`[data-field="${f}"]`).value.trim();
         const updates = {
           label: val("label"),
-          price: Number(val("price")) || 0,
+          price: 0,
           sort_order: Number(val("sort_order")) || 0,
           active: row.querySelector('[data-field="active"]').checked
         };

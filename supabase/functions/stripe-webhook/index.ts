@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
             <h2 style="color:#2f5d43;">Thank you for your order!</h2>
             <p>Order ref: <strong>${order.ref}</strong></p>
             <table style="width:100%;border-collapse:collapse;">${itemRows}
-              <tr><td style="padding:6px 0;border-top:1px solid #ddd;">Delivery (${order.delivery_method || ""})</td><td style="text-align:right;border-top:1px solid #ddd;">${Number(order.delivery_price) === 0 ? "Free" : "£" + Number(order.delivery_price).toLocaleString("en-GB")}</td></tr>
+              <tr><td style="padding:6px 0;border-top:1px solid #ddd;">Delivery (${order.delivery_method || ""})</td><td style="text-align:right;border-top:1px solid #ddd;">${Number(order.delivery_price) > 0 ? "£" + Number(order.delivery_price).toLocaleString("en-GB") : "Enquire"}</td></tr>
               <tr><td style="padding:8px 0;font-weight:bold;">Total</td><td style="text-align:right;font-weight:bold;">£${Number(order.total).toLocaleString("en-GB")}</td></tr>
             </table>
             ${address ? `<p style="color:#666;font-size:14px;">Delivering to: ${address}</p>` : ""}

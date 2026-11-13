@@ -74,30 +74,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Delivery option — price looked up server-side too
-    let deliveryPrice = 0;
+    // Delivery is arranged after checkout, so no delivery charge is added to Stripe
     let deliveryLabel = "Delivery";
     if (body.delivery_option_id) {
       const { data: opt } = await supabase
         .from("delivery_options")
-        .select("label,price")
+        .select("label")
         .eq("id", body.delivery_option_id)
         .eq("active", true)
         .maybeSingle();
-      if (opt) {
-        deliveryPrice = Number(opt.price) || 0;
-        deliveryLabel = opt.label;
-      }
-    }
-    if (deliveryPrice > 0) {
-      lineItems.push({
-        quantity: 1,
-        price_data: {
-          currency: "gbp",
-          unit_amount: Math.round(deliveryPrice * 100),
-          product_data: { name: `Delivery — ${deliveryLabel}` },
-        },
-      });
+      if (opt) deliveryLabel = opt.label;
     }
 
     const ref = "RR-" + Date.now().toString(36).toUpperCase().slice(-6);
@@ -117,8 +103,8 @@ Deno.serve(async (req) => {
       notes: String(body.notes || ""),
       items: orderItems,
       subtotal,
-      delivery_price: deliveryPrice,
-      total: subtotal + deliveryPrice,
+      delivery_price: 0,
+      total: subtotal,
       status: "new",
       paid: false,
       stripe_mode: mode.toLowerCase(),
