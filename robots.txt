@@ -2,6 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /dashboard/
-Disallow: /checkout/
 
 Sitemap: https://www.redoandrenew.co.uk/sitemap.xml

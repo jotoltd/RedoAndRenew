@@ -86,10 +86,6 @@
       background: #a03a3a; color: #fff; font-size: 13px; line-height: 1;
       cursor: pointer;
     }
-    .order-card__items { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
-    .order-card__item { display: flex; justify-content: space-between; font-size: 0.92rem; color: var(--ink); padding: 4px 0; }
-    .order-card__item span:last-child { font-weight: 600; color: var(--green-dark); }
-    .order-card__total { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-weight: 700; color: var(--green-dark); }
     .enquiry-card__details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
     .enquiry-card__detail { font-size: 0.9rem; }
     .enquiry-card__detail strong { color: var(--green-dark); display: block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
@@ -211,8 +207,8 @@
         <div style="display:flex;align-items:center;gap:14px;">
           <img src="../assets/img/logo.jpg" alt="" class="dashboard__logo" />
           <div>
-            <h1 class="dashboard__title">Shop admin</h1>
-            <p class="dashboard__sub">Manage orders, enquiries, products and site content.</p>
+            <h1 class="dashboard__title">Site admin</h1>
+            <p class="dashboard__sub">Manage enquiries, pieces and site content.</p>
           </div>
         </div>
         <div class="dashboard__actions">
@@ -222,46 +218,27 @@
       </div>
 
       <div class="dashboard__stats">
-        <div class="stat-card"><span class="stat-card__icon">📦</span><span class="stat-card__num" id="statOrders">–</span><span class="stat-card__label">Orders</span></div>
-        <div class="stat-card"><span class="stat-card__icon">💷</span><span class="stat-card__num" id="statRevenue">–</span><span class="stat-card__label">Revenue</span></div>
-        <div class="stat-card"><span class="stat-card__icon">✉️</span><span class="stat-card__num" id="statNewEnquiries">–</span><span class="stat-card__label">New enquiries</span></div>
+        <div class="stat-card"><span class="stat-card__icon">🪑</span><span class="stat-card__num" id="statPieces">–</span><span class="stat-card__label">Pieces</span></div>
+        <div class="stat-card"><span class="stat-card__icon">✉️</span><span class="stat-card__num" id="statEnquiries">–</span><span class="stat-card__label">Enquiries</span></div>
+        <div class="stat-card"><span class="stat-card__icon">🆕</span><span class="stat-card__num" id="statNewEnquiries">–</span><span class="stat-card__label">New enquiries</span></div>
       </div>
 
       <div class="dashboard__tabs">
-        <button class="dashboard__tab active" data-tab="orders">📦 Orders <span class="tab-count" id="countOrders"></span></button>
-        <button class="dashboard__tab" data-tab="enquiries">✉️ Enquiries <span class="tab-count" id="countEnquiries"></span></button>
-        <button class="dashboard__tab" data-tab="products">🪑 Products</button>
+        <button class="dashboard__tab active" data-tab="enquiries">✉️ Enquiries <span class="tab-count" id="countEnquiries"></span></button>
+        <button class="dashboard__tab" data-tab="products">🪑 Pieces</button>
         <button class="dashboard__tab" data-tab="gallery">🖼️ Gallery</button>
-        <button class="dashboard__tab" data-tab="delivery">🚚 Delivery</button>
         <button class="dashboard__tab" data-tab="faq">❓ FAQs</button>
         <button class="dashboard__tab" data-tab="settings">⚙️ Settings</button>
       </div>
 
-      <!-- Orders panel -->
-      <div class="dashboard__panel active" data-panel="orders">
-        <p class="panel-hint">Orders placed on the site appear here. Mark them confirmed once you've seen them, completed once delivered — and refund or cancel where needed.</p>
-        <div class="enquiry-filters" id="orderFilters">
-          <button class="enquiry-filter active" data-order-filter="all">All</button>
-          <button class="enquiry-filter" data-order-filter="new">New</button>
-          <button class="enquiry-filter" data-order-filter="confirmed">Confirmed</button>
-          <button class="enquiry-filter" data-order-filter="completed">Completed</button>
-          <button class="enquiry-filter" data-order-filter="unpaid">Unpaid</button>
-          <button class="enquiry-filter" data-order-filter="cancelled">Cancelled</button>
-          <button class="enquiry-filter" id="exportOrdersBtn" style="margin-left:auto;">Export CSV</button>
-        </div>
-        <div id="ordersList">
-          <p class="admin-login__note">Loading orders…</p>
-        </div>
-      </div>
-
       <!-- Enquiries panel -->
-      <div class="dashboard__panel" data-panel="enquiries">
+      <div class="dashboard__panel active" data-panel="enquiries">
         <p class="panel-hint">Every message from the contact form lands here. Click an email address to reply, and use the status buttons to keep track of where you're up to.</p>
         <div class="enquiry-filters" id="enquiryFilters">
           <button class="enquiry-filter active" data-filter="all">All</button>
           <button class="enquiry-filter" data-filter="renew">Renewals</button>
           <button class="enquiry-filter" data-filter="source">Sourcing</button>
-          <button class="enquiry-filter" data-filter="purchase">Purchases</button>
+          <button class="enquiry-filter" data-filter="purchase">Pieces</button>
           <button class="enquiry-filter" data-filter="other">Other</button>
         </div>
         <div id="enquiriesList">
@@ -269,13 +246,21 @@
         </div>
       </div>
 
-      <!-- Products panel -->
+      <!-- Pieces panel -->
       <div class="dashboard__panel" data-panel="products">
-        <p class="panel-hint">The pieces for sale on the site. Set stock to 0 to mark a piece as sold — or tick "Enquire about me" to show an enquiry button instead of a price. Set a Position number to control the order — lower numbers appear first; pieces left blank show newest-first after positioned ones.</p>
-        <div id="productsList">
-          <p class="admin-login__note">Loading products…</p>
+        <p class="panel-hint">The pieces shown in the catalogue. Every piece needs a status — Ready to Upcycle or Ready to Go — and gets an "Enquire about me" button that opens the contact form. Set a Position number to control the order — lower numbers appear first; pieces left blank show newest-first after positioned ones.</p>
+        <div class="faq-editor__item" style="max-width: 640px;">
+          <label class="editor-field"><span>Piece name</span><input type="text" id="newPieceName" placeholder="e.g. Nest of tables" /></label>
+          <div class="editor-field"><span>Status (required)</span>
+            <label class="product-item__sold"><input type="radio" name="newPieceStatus" value="upcycle" /> Ready to Upcycle</label>
+            <label class="product-item__sold"><input type="radio" name="newPieceStatus" value="go" /> Ready to Go</label>
+          </div>
+          <button class="faq-editor__btn faq-editor__btn--save" id="addProductBtn">Add piece</button>
+          <p class="form__note" id="newPieceNote" style="text-align:left; margin-top:8px;"></p>
         </div>
-        <button class="faq-editor__add" id="addProductBtn">+ Add product</button>
+        <div id="productsList" style="margin-top:20px;">
+          <p class="admin-login__note">Loading pieces…</p>
+        </div>
       </div>
 
       <!-- Gallery panel -->
@@ -286,15 +271,6 @@
         </div>
         <button class="faq-editor__add" id="addGalleryBtn">+ Add photos</button>
         <input type="file" id="galleryFileInput" accept="image/*" multiple hidden />
-      </div>
-
-      <!-- Delivery panel -->
-      <div class="dashboard__panel" data-panel="delivery">
-        <p class="panel-hint">The delivery choices customers see at checkout. Delivery isn't priced online — customers are asked to enquire.</p>
-        <div id="deliveryList">
-          <p class="admin-login__note">Loading delivery options…</p>
-        </div>
-        <button class="faq-editor__add" id="addDeliveryBtn">+ Add delivery option</button>
       </div>
 
       <!-- FAQ panel -->
@@ -308,21 +284,7 @@
 
       <!-- Settings panel -->
       <div class="dashboard__panel" data-panel="settings">
-        <div class="faq-editor__item" style="max-width: 540px;">
-          <label class="product-item__sold"><input type="checkbox" id="settingShowStock" /> Show stock count on shop &amp; product pages</label>
-          <p style="font-size: 0.82rem; color: var(--muted);">When off, sold-out pieces still show a Sold badge — only the "X available" count is hidden.</p>
-          <p class="form__note" id="settingsNote" style="text-align:left; margin-top:8px;"></p>
-        </div>
-        <div class="faq-editor__item" style="max-width: 540px;">
-          <label class="editor-field"><span>Payment mode</span>
-            <select id="settingStripeMode">
-              <option value="test">Sandbox — test payments</option>
-              <option value="live">Live — real payments</option>
-            </select>
-          </label>
-          <p style="font-size: 0.82rem; color: var(--muted);">Sandbox uses Stripe's test keys — no real money moves. Switch to Live once the live key and webhook are set in Supabase.</p>
-          <p class="form__note" id="stripeModeNote" style="text-align:left; margin-top:8px;"></p>
-        </div>
+        <p class="panel-hint">Site settings.</p>
         <div class="faq-editor__item" style="max-width: 540px;">
           <label class="editor-field"><span>Current password</span><input type="password" id="settingPasswordCurrent" placeholder="Current password" autocomplete="current-password" /></label>
           <label class="editor-field"><span>New password</span><input type="password" id="settingPassword" placeholder="Enter new password" autocomplete="new-password" /></label>

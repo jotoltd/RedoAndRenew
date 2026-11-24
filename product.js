@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const root = document.getElementById("productRoot");
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  const fmt = (n) => "£" + Number(n || 0).toLocaleString("en-GB");
 
   const id = new URLSearchParams(location.search).get("id");
 
@@ -16,30 +15,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     root.innerHTML = `
       <div class="product-page__missing">
         <h1>Piece not found</h1>
-        <p>This piece may have sold or been removed.</p>
-        <a href="../#shop" class="btn btn--primary">Back to shop</a>
+        <p>This piece may have been removed.</p>
+        <a href="../#pieces" class="btn btn--primary">Back to pieces</a>
       </div>`;
   };
 
   if (!id || typeof supabase === "undefined") { showMissing(); return; }
 
-  const [{ data: p, error }, { data: stockSetting }, { data: hideSetting }] = await Promise.all([
+  const [{ data: p, error }, { data: hideSetting }] = await Promise.all([
     supabase.from("products").select("*").eq("id", id).single(),
-    supabase.from("settings").select("value").eq("key", "show_stock").maybeSingle(),
     supabase.from("settings").select("value").eq("key", "hide_preloved_ids").maybeSingle()
   ]);
 
   if (error || !p) { showMissing(); return; }
 
-  const showStock = !stockSetting || stockSetting.value !== "false";
   const hidePreloved = hideSetting && hideSetting.value
     ? hideSetting.value.split(",").includes(String(p.id))
     : false;
-  const soldOut = p.sold || (p.stock != null && p.stock <= 0);
-  const enquireOnly = !soldOut && (p.enquire_only || !(Number(p.price) > 0));
-  const stockNote = showStock && !soldOut && p.stock != null
-    ? (p.stock === 1 ? "Only 1 available — once it's gone, it's gone." : `${p.stock} available`)
-    : "";
+  const status = p.enquire_only ? "Ready to Upcycle" : "Ready to Go";
+  const enquiryHref = `/?enquire=purchase&piece=${encodeURIComponent(p.name)}&status=${encodeURIComponent(status)}#contact`;
 
   document.title = `${p.name} — Redo & Renew`;
 
@@ -50,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   root.innerHTML = `
     <div class="product-page__media">
       ${gallery.length ? `<img id="productMainImg" src="${esc(gallery[0])}" alt="${esc(p.name)}" />` : ""}
-      ${soldOut ? '<span class="product-card__badge product-card__badge--sold">Sold</span>' : p.tag ? `<span class="product-card__badge">${esc(p.tag)}</span>` : ""}
+      ${p.tag ? `<span class="product-card__badge">${esc(p.tag)}</span>` : ""}
       ${gallery.length > 1 ? `
         <div class="product-page__thumbs">
           ${gallery.map((u, i) => `<img src="${esc(u)}" alt="" class="${i === 0 ? "active" : ""}" data-thumb="${i}" />`).join("")}
@@ -59,19 +53,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     <div class="product-page__info">
       <span class="eyebrow">One of a kind</span>
       <h1>${esc(p.name)}</h1>
-      ${enquireOnly
-        ? '<p class="product-page__price product-page__price--enquire">Ready to be upcycled — price on enquiry</p>'
-        : `<p class="product-page__price">${fmt(p.price)}</p>`}
-      ${stockNote ? `<p class="product-page__stock">${stockNote}</p>` : ""}
+      <p class="product-page__price product-page__price--enquire">${status}</p>
       ${p.description ? `<p class="product-page__desc">${esc(p.description)}</p>` : ""}
       ${hidePreloved ? "" : '<p class="product-page__preloved">All pieces are preloved and lovingly upcycled. As with any previously loved furniture, you may notice some minor signs of its past life. These little imperfections are part of the character, charm and authenticity of each unique piece.</p>'}
       <div class="product-page__actions">
-        ${enquireOnly
-          ? `<a class="btn btn--primary" href="/?enquire=purchase&piece=${encodeURIComponent(p.name)}#contact">Enquire about me</a>`
-          : `<button class="btn btn--primary" id="productAdd" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold" : "Add to Basket"}</button>`}
-        <a href="../#shop" class="product-page__back">← Back to shop</a>
+        <a class="btn btn--primary" href="${enquiryHref}">Enquire about me</a>
+        <a href="../#pieces" class="product-page__back">← Back to pieces</a>
       </div>
-      <p class="product-page__note">♻️ Every purchase gives solid furniture a second life. Delivery available far and wide from Melton Mowbray.</p>
+      <p class="product-page__note">♻️ Every renewed piece gives solid furniture a second life. Enquire about availability, collection or delivery.</p>
     </div>
   `;
 
@@ -83,23 +72,4 @@ document.addEventListener("DOMContentLoaded", async () => {
       thumb.classList.add("active");
     });
   });
-
-  const addBtn = document.getElementById("productAdd");
-  if (addBtn && !soldOut) {
-    addBtn.addEventListener("click", () => {
-      let cart = JSON.parse(localStorage.getItem("rn_cart") || "[]");
-      const maxQty = p.stock != null ? p.stock : Infinity;
-      const existing = cart.find((i) => i.id === p.id);
-      if (existing) existing.qty = Math.min(existing.qty + 1, maxQty);
-      else cart.push({ id: p.id, qty: 1 });
-      localStorage.setItem("rn_cart", JSON.stringify(cart));
-      addBtn.textContent = "Added ✓";
-      addBtn.disabled = true;
-      const back = root.querySelector(".product-page__back");
-      if (back) {
-        back.textContent = "Go to checkout →";
-        back.href = "../checkout/";
-      }
-    });
-  }
 });

@@ -14,13 +14,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Redo & Renew by Charline — Bespoke Furniture Upcycling | Melton Mowbray & beyond</title>
-  <meta name="description" content="Redo & Renew rescues forgotten furniture and gives it a fresh, stylish second life. Sustainable, bespoke, hand-finished pieces delivered far and wide from Melton Mowbray." />
+  <meta name="description" content="Redo & Renew rescues forgotten furniture and gives it a fresh, stylish second life. Browse one-of-a-kind pieces and enquire about availability, upcycling or commissions." />
 
   <!-- Social share -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.redoandrenew.co.uk/" />
   <meta property="og:title" content="Redo & Renew — Bespoke Furniture Upcycling" />
-  <meta property="og:description" content="Forgotten furniture rescued, renewed and rehomed. One-of-a-kind hand-finished pieces, delivered far and wide from Melton Mowbray." />
+  <meta property="og:description" content="Forgotten furniture rescued, renewed and rehomed. Browse one-of-a-kind pieces and enquire about availability or commissions." />
   <meta property="og:image" content="https://www.redoandrenew.co.uk/assets/img/hero.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="canonical" href="https://www.redoandrenew.co.uk/" />
@@ -46,16 +46,12 @@
         <a href="#story">Our Story</a>
         <a href="#values">Why Us</a>
         <a href="#gallery">Gallery</a>
-        <a href="#shop">Shop</a>
+        <a href="#pieces">Pieces</a>
         <a href="#process">Process</a>
         <a href="#reviews">Reviews</a>
         <a href="#faq">FAQ</a>
         <a href="#contact" class="nav__cta">Get in Touch</a>
       </nav>
-      <button class="nav__cart" id="cartBtn" aria-label="Open cart">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-        <span class="nav__cart-count" id="cartCount">0</span>
-      </button>
       <button class="nav__toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -73,7 +69,7 @@
       <h1 class="hero__title reveal">Every piece has a story<br /><em>worth saving.</em></h1>
       <p class="hero__lead reveal">We rescue forgotten, worn-out furniture and give it a fresh, stylish second life in loving homes.</p>
       <div class="hero__actions reveal">
-        <a href="#shop" class="btn btn--primary">Shop Pieces</a>
+        <a href="#pieces" class="btn btn--primary">View Pieces</a>
         <a href="#gallery" class="btn btn--ghost">View Our Work</a>
       </div>
     </div>
@@ -175,18 +171,18 @@
     </div>
   </section>
 
-  <!-- ===== SHOP ===== -->
-  <section class="shop" id="shop">
+  <!-- ===== PIECES ===== -->
+  <section class="pieces" id="pieces">
     <div class="container">
       <div class="section-head">
         <span class="eyebrow reveal">Available now</span>
         <h2 class="reveal">Take a piece home</h2>
-        <p class="section-sub reveal">Each piece is one-of-a-kind and hand-finished. Once it's gone, it's gone.</p>
+        <p class="section-sub reveal">Each piece is one-of-a-kind and hand-finished. Enquire to buy or upcycle — once it's gone, it's gone.</p>
       </div>
-      <div class="shop__grid" id="shopGrid">
+      <div class="pieces__grid" id="piecesGrid">
         <!-- Product cards injected by script.js -->
       </div>
-      <p class="shop__note reveal">♻️ Every purchase gives solid furniture a second life. Delivery available far and wide from Melton Mowbray.</p>
+      <p class="pieces__note reveal">♻️ Every renewed piece gives solid furniture a second life. Enquire about availability, collection or delivery.</p>
     </div>
   </section>
 
@@ -287,7 +283,7 @@
             <option value="" selected disabled>Please choose an option…</option>
             <option value="renew">Renewing a piece I own</option>
             <option value="source">Source an item for me</option>
-            <option value="purchase">Buying a piece from the shop</option>
+            <option value="purchase">Enquiring about a piece</option>
             <option value="other">Something else</option>
           </select>
         </div>
@@ -450,17 +446,17 @@
         </div>
 
         <div class="form-panel" data-panel="purchase" hidden>
-          <p class="form-panel__intro"><strong>Buying a piece from the shop 🪑</strong></p>
-          <p class="form-panel__intro">Seen something you love? Tell me which piece you're interested in and ask me anything — delivery, payment, viewing or a closer look at the finish.</p>
+          <p class="form-panel__intro"><strong>Enquiring about a piece 🪑</strong></p>
+          <p class="form-panel__intro">Seen something you love? Tell me which piece you're interested in and ask me anything — buying it, upcycling it further, viewing, collection or delivery.</p>
 
           <div class="field">
             <label for="purchasePiece">Which piece are you interested in?</label>
-            <span class="field__hint">The name of the piece from the shop, if you know it.</span>
+            <span class="field__hint">The name of the piece from the catalogue, if you know it.</span>
             <input type="text" id="purchasePiece" name="purchasePiece" />
           </div>
           <div class="field">
             <label for="purchaseMessage">Your message</label>
-            <textarea id="purchaseMessage" name="purchaseMessage" rows="5" placeholder="e.g. Is delivery available to…?"></textarea>
+            <textarea id="purchaseMessage" name="purchaseMessage" rows="5" placeholder="e.g. Is this piece available to view or collect?"></textarea>
           </div>
         </div>
 
@@ -522,27 +518,6 @@
       <p class="footer__copy">© <span id="year"></span> Redo & Renew. All rights reserved.</p>
     </div>
   </footer>
-
-  <!-- ===== CART DRAWER ===== -->
-  <div class="cart-overlay" id="cartOverlay"></div>
-  <aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
-    <div class="cart-drawer__head">
-      <h3>Your Basket</h3>
-      <button class="cart-drawer__close" id="cartClose" aria-label="Close cart">&times;</button>
-    </div>
-    <div class="cart-drawer__body" id="cartBody">
-      <p class="cart-drawer__empty" id="cartEmpty">Your basket is empty.<br />Have a look at the pieces below! ♻️</p>
-      <div class="cart-drawer__items" id="cartItems"></div>
-    </div>
-    <div class="cart-drawer__foot" id="cartFoot" hidden>
-      <div class="cart-drawer__total">
-        <span>Total</span>
-        <strong id="cartTotal">£0</strong>
-      </div>
-      <button class="btn btn--primary btn--full" id="checkoutBtn">Checkout</button>
-      <p class="cart-drawer__hint">Secure checkout powered by Stripe.</p>
-    </div>
-  </aside>
 
   <!-- ===== LIGHTBOX ===== -->
   <div class="lightbox" id="lightbox" aria-hidden="true">

@@ -40,171 +40,6 @@
     toast._t = setTimeout(() => toastEl.classList.remove("show"), 2600);
   };
 
-  /* ---------- Orders ---------- */
-  const ordersList = document.getElementById("ordersList");
-  const fmt = (n) => "£" + Number(n || 0).toLocaleString("en-GB");
-  let allOrders = [];
-  let orderFilter = "all";
-
-  const updateStats = () => {
-    const statOrders = document.getElementById("statOrders");
-    const statRevenue = document.getElementById("statRevenue");
-    const statNew = document.getElementById("statNewEnquiries");
-    if (statOrders) statOrders.textContent = allOrders.length;
-    if (statRevenue) statRevenue.textContent = fmt(allOrders.reduce((s, o) => s + (o.paid ? Number(o.total) || 0 : 0), 0));
-    if (statNew) statNew.textContent = allEnquiries.filter((e) => (e.status || "new") === "new").length;
-  };
-
-  const renderOrders = () => {
-    const items = orderFilter === "all"
-      ? allOrders
-      : orderFilter === "unpaid"
-        ? allOrders.filter((o) => !o.paid && !["refunded", "cancelled"].includes(o.status || "new"))
-        : orderFilter === "cancelled"
-          ? allOrders.filter((o) => ["refunded", "cancelled"].includes(o.status || ""))
-          : allOrders.filter((o) => (o.status || "new") === orderFilter);
-
-    ordersList.innerHTML = items.length ? items.map((o) => {
-      const date = new Date(o.created_at).toLocaleString("en-GB", {
-        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-      });
-      const items = Array.isArray(o.items) ? o.items : [];
-      const address = [o.address1, o.address2, o.town, o.postcode].filter(Boolean).join(", ");
-
-      return `
-        <div class="enquiry-card" data-id="${o.id}">
-          <div class="enquiry-card__head">
-            <div>
-              <div class="enquiry-card__name">${esc(o.ref)} — ${esc(o.name)}</div>
-              <div class="enquiry-card__meta">${date}</div>
-              <div class="enquiry-card__meta">📧 <a href="mailto:${esc(o.email)}" style="color:var(--green);">${esc(o.email)}</a>${o.phone ? ` · 📞 ${esc(o.phone)}` : ""}</div>
-              ${address ? `<div class="enquiry-card__meta">📍 ${esc(address)}</div>` : ""}
-              ${o.delivery_method ? `<div class="enquiry-card__meta">🚚 ${esc(o.delivery_method)}</div>` : ""}
-              ${o.notes ? `<div class="enquiry-card__meta">📝 ${esc(o.notes)}</div>` : ""}
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <span class="enquiry-card__badge enquiry-card__badge--${o.status || "new"}">${o.status || "new"}</span>
-              <span class="enquiry-card__badge ${o.paid ? "enquiry-card__badge--completed" : "enquiry-card__badge--read"}">${o.paid ? "Paid" : "Unpaid"}</span>
-            </div>
-          </div>
-          <div class="order-card__items">
-            ${items.map((i) => `<div class="order-card__item"><span>${esc(i.name || "Item")} × ${Number(i.qty) || 1}</span><span>${fmt((Number(i.price) || 0) * (Number(i.qty) || 1))}</span></div>`).join("")}
-            <div class="order-card__item"><span>Delivery</span><span>${Number(o.delivery_price) > 0 ? fmt(o.delivery_price) : "Enquire"}</span></div>
-            <div class="order-card__total"><span>Total</span><span>${fmt(o.total)}</span></div>
-          </div>
-          <div class="enquiry-card__actions">
-            <a class="enquiry-card__btn" href="mailto:${esc(o.email)}?subject=${encodeURIComponent(`Your Redo & Renew order ${o.ref}`)}">Email customer</a>
-            <button class="enquiry-card__btn" data-order-status="confirmed" data-id="${o.id}">Mark confirmed</button>
-            <button class="enquiry-card__btn" data-order-status="completed" data-id="${o.id}">Mark completed</button>
-            <button class="enquiry-card__btn" data-order-status="new" data-id="${o.id}">Mark as new</button>
-            ${o.paid && o.status !== "refunded" ? `<button class="enquiry-card__btn enquiry-card__btn--danger" data-order-refund="${o.id}">Refund</button>` : ""}
-            ${!o.paid && !["refunded", "cancelled"].includes(o.status || "new") ? `<button class="enquiry-card__btn" data-order-cancel="${o.id}">Cancel</button>` : ""}
-            <button class="enquiry-card__btn enquiry-card__btn--danger" data-order-delete="${o.id}">Delete</button>
-          </div>
-        </div>
-      `;
-    }).join("") : '<p class="admin-login__note">No orders yet.</p>';
-
-    ordersList.querySelectorAll("[data-order-status]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        await supabase.from("orders").update({ status: btn.dataset.orderStatus }).eq("id", btn.dataset.id);
-        loadOrders();
-      });
-    });
-    ordersList.querySelectorAll("[data-order-delete]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("Delete this order? This can't be undone.")) return;
-        await supabase.from("orders").delete().eq("id", btn.dataset.orderDelete);
-        toast("Order deleted");
-        loadOrders();
-      });
-    });
-    ordersList.querySelectorAll("[data-order-refund]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const order = allOrders.find((x) => String(x.id) === btn.dataset.orderRefund);
-        if (!confirm(`Refund ${order ? fmt(order.total) : "this order"} to the customer? This can't be undone.`)) return;
-        btn.disabled = true;
-        btn.textContent = "Refunding…";
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          const res = await fetch(`${SUPABASE_URL}/functions/v1/refund-order`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session ? session.access_token : ""}`,
-            },
-            body: JSON.stringify({ order_id: Number(btn.dataset.orderRefund) }),
-          });
-          const data = await res.json();
-          if (!res.ok || !data.ok) {
-            alert(data.error || "Refund failed — try again.");
-            btn.disabled = false;
-            btn.textContent = "Refund";
-            return;
-          }
-          loadOrders();
-        } catch {
-          alert("Refund failed — check the function is deployed.");
-          btn.disabled = false;
-          btn.textContent = "Refund";
-        }
-      });
-    });
-    ordersList.querySelectorAll("[data-order-cancel]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("Cancel this unpaid order?")) return;
-        await supabase.from("orders").update({ status: "cancelled" }).eq("id", btn.dataset.orderCancel);
-        loadOrders();
-      });
-    });
-  };
-
-  const exportBtn = document.getElementById("exportOrdersBtn");
-  if (exportBtn) {
-    exportBtn.addEventListener("click", () => {
-      const rows = [["Ref", "Date", "Name", "Email", "Phone", "Address", "Delivery", "Items", "Subtotal", "Delivery amount", "Total", "Paid", "Status"]];
-      allOrders.forEach((o) => {
-        const address = [o.address1, o.address2, o.town, o.postcode].filter(Boolean).join(", ");
-        const itemList = (Array.isArray(o.items) ? o.items : []).map((i) => `${i.name || "Item"} x${i.qty || 1}`).join("; ");
-        rows.push([o.ref, new Date(o.created_at).toLocaleString("en-GB"), o.name, o.email, o.phone || "", address, o.delivery_method || "", itemList, o.subtotal, Number(o.delivery_price) > 0 ? o.delivery_price : "Enquire", o.total, o.paid ? "Yes" : "No", o.status || "new"]);
-      });
-      const csv = rows.map((r) => r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-      a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
-  }
-
-  const loadOrders = async () => {
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      ordersList.innerHTML = '<p class="admin-login__note">Error loading orders.</p>';
-      return;
-    }
-    allOrders = data || [];
-    const countEl = document.getElementById("countOrders");
-    if (countEl) countEl.textContent = allOrders.length || "";
-    updateStats();
-    renderOrders();
-  };
-
-  document.querySelectorAll("[data-order-filter]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll("[data-order-filter]").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      orderFilter = btn.dataset.orderFilter;
-      renderOrders();
-    });
-  });
-
-  loadOrders();
-
   /* ---------- Enquiries ---------- */
   const enquiriesList = document.getElementById("enquiriesList");
   let enquiryFilter = "all";
@@ -212,7 +47,7 @@
   const typeLabels = {
     renew: "Renewing a piece",
     source: "Sourcing request",
-    purchase: "Shop purchase",
+    purchase: "Piece enquiry",
     other: "Something else"
   };
 
@@ -312,15 +147,17 @@
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error || !data || data.length === 0) {
-      enquiriesList.innerHTML = `<p class="admin-login__note">${error ? "Error loading enquiries." : "No enquiries yet."}</p>`;
-      return;
-    }
-
-    allEnquiries = data;
+    allEnquiries = error ? [] : (data || []);
     const countEl = document.getElementById("countEnquiries");
     if (countEl) countEl.textContent = allEnquiries.length || "";
-    updateStats();
+    const statEnquiries = document.getElementById("statEnquiries");
+    const statNew = document.getElementById("statNewEnquiries");
+    if (statEnquiries) statEnquiries.textContent = allEnquiries.length;
+    if (statNew) statNew.textContent = allEnquiries.filter((e) => (e.status || "new") === "new").length;
+    if (error) {
+      enquiriesList.innerHTML = '<p class="admin-login__note">Error loading enquiries.</p>';
+      return;
+    }
     renderEnquiries();
   };
 
@@ -335,7 +172,7 @@
 
   loadEnquiries();
 
-  /* ---------- Products ---------- */
+  /* ---------- Pieces ---------- */
   const productsList = document.getElementById("productsList");
   const addProductBtn = document.getElementById("addProductBtn");
   let productItems = [];
@@ -365,7 +202,7 @@
 
   const renderProducts = () => {
     if (productItems.length === 0) {
-      productsList.innerHTML = '<p class="admin-login__note">No products yet — add your first piece below.</p>';
+      productsList.innerHTML = '<p class="admin-login__note">No pieces yet — add your first piece above.</p>';
       return;
     }
     productItems.forEach((p) => {
@@ -379,16 +216,17 @@
           ${p.image_url ? `<img class="product-item__img" src="${esc(p.image_url)}" alt="" />` : '<div class="product-item__img"></div>'}
           <div class="product-item__fields">
             <label class="editor-field"><span>Name</span><input type="text" value="${esc(p.name)}" data-field="name" /></label>
-            <label class="editor-field"><span>Price (£)</span><input type="number" value="${p.price}" data-field="price" min="0" step="1" /></label>
           </div>
         </div>
         <label class="editor-field"><span>Description</span><textarea data-field="description">${esc(p.description || "")}</textarea></label>
-        <div class="product-item__grid" style="grid-template-columns:1fr 110px 110px;">
+        <div class="product-item__grid" style="grid-template-columns:1fr 110px;">
           <label class="editor-field"><span>Badge (optional)</span><input type="text" value="${esc(p.tag || "")}" placeholder="e.g. New, One of a kind" data-field="tag" /></label>
-          <label class="editor-field"><span>Stock (0 = sold)</span><input type="number" value="${p.stock ?? 1}" data-field="stock" min="0" step="1" /></label>
           <label class="editor-field"><span>Position${productSortable ? "" : " — needs sort_order column"}</span><input type="number" value="${p.sort_order ?? ""}" data-field="sort_order" min="0" step="1" placeholder="—" ${productSortable ? "" : "disabled"} /></label>
         </div>
-        <label class="product-item__sold"><input type="checkbox" data-field="enquire_only" ${p.enquire_only ? "checked" : ""} /> “Enquire about me” — show an enquiry button instead of a price (for pieces ready to be upcycled)</label>
+        <div class="editor-field"><span>Status (required)</span>
+          <label class="product-item__sold"><input type="radio" name="status-${p.id}" data-field="status" value="upcycle" ${p.enquire_only ? "checked" : ""} /> Ready to Upcycle</label>
+          <label class="product-item__sold"><input type="radio" name="status-${p.id}" data-field="status" value="go" ${p.enquire_only ? "" : "checked"} /> Ready to Go</label>
+        </div>
         <label class="product-item__sold"><input type="checkbox" data-field="hide_preloved" ${hidePrelovedIds.has(String(p.id)) ? "checked" : ""} /> Hide the “preloved &amp; lovingly upcycled” note (for kits and supplies)</label>
         <div class="editor-field"><span>Photos (first one is the cover)</span>
           <div class="product-photos" data-gallery="${p.id}"></div>
@@ -443,17 +281,16 @@
         }
 
         const images = galleryMap[id] || [];
-        const stock = Number(val("stock")) || 0;
+        const status = row.querySelector('[data-field="status"]:checked');
+        if (!status) return;
         const updates = {
           name: val("name"),
-          price: Number(val("price")) || 0,
+          price: 0,
           description: val("description"),
           tag: val("tag") || null,
           images,
           image_url: images[0] || null,
-          stock,
-          sold: stock <= 0,
-          enquire_only: row.querySelector('[data-field="enquire_only"]').checked
+          enquire_only: status.value === "upcycle"
         };
         if (productSortable) updates.sort_order = val("sort_order") === "" ? null : Number(val("sort_order"));
         if (!updates.name) return;
@@ -470,9 +307,9 @@
     productsList.querySelectorAll("[data-delete]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const name = btn.closest(".faq-editor__item").querySelector('[data-field="name"]').value;
-        if (!confirm(`Delete "${name || "this piece"}" from the shop? This can't be undone.`)) return;
+        if (!confirm(`Delete "${name || "this piece"}" from the catalogue? This can't be undone.`)) return;
         await supabase.from("products").delete().eq("id", btn.dataset.delete);
-        toast("Product deleted");
+        toast("Piece deleted");
         loadProducts();
       });
     });
@@ -487,142 +324,56 @@
     productSortable = !soErr;
     hidePrelovedIds = new Set((hp && hp.value ? hp.value.split(",") : []).filter(Boolean));
     if (error) {
-      productsList.innerHTML = '<p class="admin-login__note">Error loading products.</p>';
+      productsList.innerHTML = '<p class="admin-login__note">Error loading pieces.</p>';
       return;
     }
     // positioned pieces first (lowest number first), then newest-first
     productItems = (data || []).sort((a, b) =>
       (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity) ||
       new Date(b.created_at) - new Date(a.created_at));
+    const statPieces = document.getElementById("statPieces");
+    if (statPieces) statPieces.textContent = productItems.length;
     renderProducts();
   };
 
+  const newPieceName = document.getElementById("newPieceName");
+  const newPieceNote = document.getElementById("newPieceNote");
+  const setNewPieceNote = (msg, isError = false) => {
+    if (!newPieceNote) return;
+    newPieceNote.style.color = isError ? "#c0392b" : "var(--green)";
+    newPieceNote.textContent = msg;
+  };
+
   addProductBtn.addEventListener("click", async () => {
+    const name = newPieceName.value.trim();
+    const status = document.querySelector('input[name="newPieceStatus"]:checked');
+    if (!name) {
+      setNewPieceNote("Enter a name for the piece.", true);
+      return;
+    }
+    if (!status) {
+      setNewPieceNote("Choose a status — Ready to Upcycle or Ready to Go.", true);
+      return;
+    }
+    setNewPieceNote("Adding piece…");
     const nextOrder = productItems.length ? Math.max(...productItems.map((p) => p.sort_order || 0)) + 1 : 1;
     const { error } = await supabase
       .from("products")
-      .insert([{ name: "New piece", price: 0, ...(productSortable ? { sort_order: nextOrder } : {}) }]);
-    if (!error) loadProducts();
+      .insert([{ name, price: 0, enquire_only: status.value === "upcycle", ...(productSortable ? { sort_order: nextOrder } : {}) }]);
+    if (error) {
+      setNewPieceNote("Couldn't add the piece — please try again.", true);
+      return;
+    }
+    newPieceName.value = "";
+    document.querySelectorAll('input[name="newPieceStatus"]').forEach((r) => (r.checked = false));
+    setNewPieceNote("Piece added ✓");
+    setTimeout(() => setNewPieceNote(""), 1800);
+    loadProducts();
   });
 
   loadProducts();
 
-  /* ---------- Delivery Options ---------- */
-  const deliveryList = document.getElementById("deliveryList");
-  const addDeliveryBtn = document.getElementById("addDeliveryBtn");
-  let deliveryItems = [];
-
-  const renderDelivery = () => {
-    if (deliveryItems.length === 0) {
-      deliveryList.innerHTML = '<p class="admin-login__note">No delivery options yet.</p>';
-      return;
-    }
-    deliveryList.innerHTML = deliveryItems.map((d) => `
-      <div class="faq-editor__item" data-id="${d.id}">
-        <label class="editor-field"><span>Label</span><input type="text" value="${esc(d.label)}" placeholder="e.g. UK courier" data-field="label" /></label>
-        <label class="editor-field"><span>Sort order</span><input type="number" value="${d.sort_order || 0}" data-field="sort_order" min="0" step="1" /></label>
-        <label class="product-item__sold"><input type="checkbox" data-field="active" ${d.active !== false ? "checked" : ""} /> Visible at checkout</label>
-        <div class="faq-editor__actions">
-          <button class="faq-editor__btn faq-editor__btn--save" data-save="${d.id}">Save</button>
-          <button class="faq-editor__btn faq-editor__btn--delete" data-delete="${d.id}">Delete</button>
-        </div>
-      </div>
-    `).join("");
-
-    deliveryList.querySelectorAll("[data-save]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const row = btn.closest(".faq-editor__item");
-        const val = (f) => row.querySelector(`[data-field="${f}"]`).value.trim();
-        const updates = {
-          label: val("label"),
-          price: 0,
-          sort_order: Number(val("sort_order")) || 0,
-          active: row.querySelector('[data-field="active"]').checked
-        };
-        if (!updates.label) return;
-        await supabase.from("delivery_options").update(updates).eq("id", btn.dataset.save);
-        btn.textContent = "Saved!";
-        setTimeout(() => (btn.textContent = "Save"), 1500);
-      });
-    });
-
-    deliveryList.querySelectorAll("[data-delete]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (!confirm("Delete this delivery option? Customers won't see it at checkout anymore.")) return;
-        await supabase.from("delivery_options").delete().eq("id", btn.dataset.delete);
-        toast("Delivery option deleted");
-        loadDelivery();
-      });
-    });
-  };
-
-  const loadDelivery = async () => {
-    const { data, error } = await supabase
-      .from("delivery_options")
-      .select("*")
-      .order("sort_order", { ascending: true });
-    if (error) {
-      deliveryList.innerHTML = '<p class="admin-login__note">Error loading delivery options.</p>';
-      return;
-    }
-    deliveryItems = data || [];
-    renderDelivery();
-  };
-
-  addDeliveryBtn.addEventListener("click", async () => {
-    const maxOrder = deliveryItems.length > 0 ? Math.max(...deliveryItems.map((d) => d.sort_order || 0)) : 0;
-    const { error } = await supabase
-      .from("delivery_options")
-      .insert([{ label: "New option", price: 0, sort_order: maxOrder + 1 }]);
-    if (!error) loadDelivery();
-  });
-
-  loadDelivery();
-
   /* ---------- Settings ---------- */
-  const settingShowStock = document.getElementById("settingShowStock");
-  const settingsNote = document.getElementById("settingsNote");
-
-  const loadSettings = async () => {
-    const { data } = await supabase
-      .from("settings")
-      .select("value")
-      .eq("key", "show_stock")
-      .maybeSingle();
-    settingShowStock.checked = !data || data.value !== "false";
-  };
-
-  settingShowStock.addEventListener("change", async () => {
-    await supabase.from("settings").upsert({ key: "show_stock", value: String(settingShowStock.checked) });
-    settingsNote.textContent = "Saved ✓";
-    setTimeout(() => (settingsNote.textContent = ""), 1500);
-  });
-
-  loadSettings();
-
-  const settingStripeMode = document.getElementById("settingStripeMode");
-  const stripeModeNote = document.getElementById("stripeModeNote");
-
-  const loadStripeMode = async () => {
-    const { data } = await supabase
-      .from("settings")
-      .select("value")
-      .eq("key", "stripe_mode")
-      .maybeSingle();
-    settingStripeMode.value = data && data.value === "live" ? "live" : "test";
-  };
-
-  settingStripeMode.addEventListener("change", async () => {
-    await supabase.from("settings").upsert({ key: "stripe_mode", value: settingStripeMode.value });
-    stripeModeNote.style.color = "var(--green)";
-    stripeModeNote.textContent = settingStripeMode.value === "live"
-      ? "Live mode — real payments will be taken."
-      : "Sandbox mode — test payments only.";
-    setTimeout(() => (stripeModeNote.textContent = ""), 2500);
-  });
-
-  loadStripeMode();
-
   const savePasswordBtn = document.getElementById("savePasswordBtn");
   const settingPassword = document.getElementById("settingPassword");
   const passwordNote = document.getElementById("passwordNote");

@@ -36,10 +36,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ---------- Deep-link anchor fix ----------
-     Hash links (e.g. ../#shop from the product/checkout pages) are
+     Hash links (e.g. ../#pieces from the product pages) are
      resolved before async content renders and images load, so layout
      shifts can leave the page scrolled short of the target — on mobile
-     the user lands on the gallery instead of the shop. Re-assert the
+     the user lands on the gallery instead of the pieces. Re-assert the
      scroll position as things settle, until the user scrolls. */
   const hashTarget = location.hash
     ? document.getElementById(location.hash.slice(1))
@@ -188,206 +188,72 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ---------- Shop (products loaded from Supabase) ---------- */
-  let products = [];
-  let showStockCount = true;
+  /* ---------- Pieces (enquiry-only catalogue) ---------- */
+  let pieces = [];
+  const piecesGrid = document.getElementById("piecesGrid");
 
-  const shopGrid = document.getElementById("shopGrid");
+  const pieceStatus = (p) => (p.enquire_only ? "Ready to Upcycle" : "Ready to Go");
+  const pieceEnquiryHref = (p) =>
+    `?enquire=purchase&piece=${encodeURIComponent(p.name)}&status=${encodeURIComponent(pieceStatus(p))}#contact`;
 
-  const renderShop = () => {
-    if (!shopGrid) return;
-    if (products.length === 0) {
-      shopGrid.innerHTML = '<p class="shop__empty reveal in">No pieces available right now — new ones are added regularly. <a href="#contact">Ask about a commission →</a></p>';
+  const renderPieces = () => {
+    if (!piecesGrid) return;
+    if (pieces.length === 0) {
+      piecesGrid.innerHTML = '<p class="pieces__empty reveal in">No pieces available right now — new ones are added regularly. <a href="#contact">Ask about a commission →</a></p>';
       return;
     }
-    shopGrid.innerHTML = products.map((p) => {
-      const soldOut = p.sold || (p.stock != null && p.stock <= 0);
-      const enquireOnly = !soldOut && (p.enquire_only || !(Number(p.price) > 0));
-      const enquireHref = `?enquire=purchase&piece=${encodeURIComponent(p.name)}#contact`;
-      const stockLine = showStockCount && !soldOut && p.stock != null
-        ? `<p class="product-card__stock">${p.stock === 1 ? "Only 1 left" : p.stock + " left"}</p>`
-        : "";
+    piecesGrid.innerHTML = pieces.map((p) => {
+      const status = pieceStatus(p);
       return `
       <article class="product-card reveal" data-id="${p.id}">
         <a class="product-card__media" href="product/?id=${p.id}">
-          <img src="${p.image_url}" alt="${p.name}" loading="lazy" />
-          ${soldOut ? '<span class="product-card__badge product-card__badge--sold">Sold</span>' : p.tag ? `<span class="product-card__badge">${p.tag}</span>` : ""}
+          <img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy" />
+          ${p.tag ? `<span class="product-card__badge">${esc(p.tag)}</span>` : ""}
         </a>
         <div class="product-card__body">
-          <h3 class="product-card__title"><a href="product/?id=${p.id}">${p.name}</a></h3>
-          <p class="product-card__desc">${p.description || ""}</p>
+          <h3 class="product-card__title"><a href="product/?id=${p.id}">${esc(p.name)}</a></h3>
+          <p class="product-card__desc">${esc(p.description || "")}</p>
           <a class="product-card__more" href="product/?id=${p.id}" hidden>Read more →</a>
-          ${stockLine}
           <div class="product-card__foot">
-            ${enquireOnly
-              ? `<span class="product-card__price product-card__price--enquire">Ready to be upcycled</span>
-                 <a class="product-card__btn" href="${enquireHref}">Enquire about me</a>`
-              : `<span class="product-card__price">£${Number(p.price).toLocaleString("en-GB")}</span>
-                 <button class="product-card__btn" data-add="${p.id}" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold" : "Add to Basket"}</button>`}
+            <span class="product-card__price product-card__price--enquire">${status}</span>
+            <a class="product-card__btn" href="${pieceEnquiryHref(p)}">Enquire about me</a>
           </div>
         </div>
       </article>
     `}).join("");
     // show "Read more" only when the description is actually clamped
-    shopGrid.querySelectorAll(".product-card__desc").forEach((desc) => {
+    piecesGrid.querySelectorAll(".product-card__desc").forEach((desc) => {
       if (desc.scrollHeight > desc.clientHeight + 1) {
         const more = desc.parentElement.querySelector(".product-card__more");
         if (more) more.hidden = false;
       }
     });
     // re-observe newly added reveal cards
-    shopGrid.querySelectorAll(".reveal").forEach((el) => {
+    piecesGrid.querySelectorAll(".reveal").forEach((el) => {
       if ("IntersectionObserver" in window) io.observe(el);
       else el.classList.add("in");
     });
   };
 
-  const loadProducts = async () => {
-    if (!shopGrid) return;
-    if (typeof supabase === "undefined") {
-      renderShop();
+  const loadPieces = async () => {
+    if (!piecesGrid || typeof supabase === "undefined") {
+      renderPieces();
       return;
     }
-    const [{ data, error }, { data: stockSetting }] = await Promise.all([
-      supabase.from("products").select("*").order("created_at", { ascending: false }),
-      supabase.from("settings").select("value").eq("key", "show_stock").maybeSingle()
-    ]);
-    showStockCount = !stockSetting || stockSetting.value !== "false";
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
     if (!error && data) {
       // positioned pieces first (lowest number first), then newest-first
-      products = data.sort((a, b) =>
+      pieces = data.sort((a, b) =>
         (a.sort_order ?? Infinity) - (b.sort_order ?? Infinity) ||
         new Date(b.created_at) - new Date(a.created_at));
-      // drop stale cart entries that no longer match a real product
-      cart = cart.filter((i) => products.some((p) => p.id === i.id));
-      renderCart();
     }
-    renderShop();
+    renderPieces();
   };
 
-  /* ---------- Cart ---------- */
-  let cart = JSON.parse(localStorage.getItem("rn_cart") || "[]");
-  const cartBtn = document.getElementById("cartBtn");
-  if (!cartBtn) return; // legal pages have no shop/cart — stop here
-  const cartDrawer = document.getElementById("cartDrawer");
-  const cartOverlay = document.getElementById("cartOverlay");
-  const cartClose = document.getElementById("cartClose");
-  const cartCount = document.getElementById("cartCount");
-  const cartItems = document.getElementById("cartItems");
-  const cartEmpty = document.getElementById("cartEmpty");
-  const cartFoot = document.getElementById("cartFoot");
-  const cartTotal = document.getElementById("cartTotal");
-
-  const fmt = (n) => "£" + n.toLocaleString("en-GB");
-  const saveCart = () => localStorage.setItem("rn_cart", JSON.stringify(cart));
-
-  const openCart = () => {
-    cartDrawer.classList.add("open");
-    cartOverlay.classList.add("open");
-    cartDrawer.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-  };
-  const closeCart = () => {
-    cartDrawer.classList.remove("open");
-    cartOverlay.classList.remove("open");
-    cartDrawer.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
-  };
-
-  const renderCart = () => {
-    saveCart();
-    const count = cart.reduce((s, i) => s + i.qty, 0);
-    cartCount.textContent = count;
-    cartCount.classList.toggle("show", count > 0);
-
-    if (cart.length === 0) {
-      cartEmpty.style.display = "block";
-      cartItems.innerHTML = "";
-      cartFoot.hidden = true;
-      return;
-    }
-    cartEmpty.style.display = "none";
-    cartFoot.hidden = false;
-    cartItems.innerHTML = cart.map((item) => {
-      const p = products.find((x) => x.id === item.id);
-      if (!p) return "";
-      return `
-        <div class="cart-item" data-id="${item.id}">
-          <img class="cart-item__img" src="${p.image_url}" alt="${p.name}" />
-          <div class="cart-item__info">
-            <span class="cart-item__name">${p.name}</span>
-            <span class="cart-item__price">${fmt(p.price)}</span>
-            <div class="cart-item__qty">
-              <button class="qty-btn" data-dec="${item.id}" aria-label="Decrease">−</button>
-              <span class="cart-item__qty-num">${item.qty}</span>
-              <button class="qty-btn" data-inc="${item.id}" aria-label="Increase">+</button>
-            </div>
-          </div>
-          <button class="cart-item__remove" data-remove="${item.id}">Remove</button>
-        </div>
-      `;
-    }).join("");
-    const total = cart.reduce((s, i) => {
-      const p = products.find((x) => x.id === i.id);
-      return p ? s + p.price * i.qty : s;
-    }, 0);
-    cartTotal.textContent = fmt(total);
-  };
-
-  const addToCart = (id) => {
-    const prod = products.find((x) => x.id === id);
-    if (!prod || prod.sold || prod.enquire_only || !(Number(prod.price) > 0) || (prod.stock != null && prod.stock <= 0)) return;
-    const maxQty = prod.stock != null ? prod.stock : Infinity;
-    const existing = cart.find((i) => i.id === id);
-    if (existing) existing.qty = Math.min(existing.qty + 1, maxQty);
-    else cart.push({ id, qty: 1 });
-    renderCart();
-    openCart();
-  };
-  const changeQty = (id, delta) => {
-    const item = cart.find((i) => i.id === id);
-    if (!item) return;
-    const prod = products.find((x) => x.id === id);
-    const maxQty = prod && prod.stock != null ? prod.stock : Infinity;
-    item.qty = Math.min(item.qty + delta, maxQty);
-    if (item.qty <= 0) cart = cart.filter((i) => i.id !== id);
-    renderCart();
-  };
-  const removeItem = (id) => {
-    cart = cart.filter((i) => i.id !== id);
-    renderCart();
-  };
-
-  // delegate shop add buttons
-  document.addEventListener("click", (e) => {
-    const add = e.target.dataset.add;
-    if (add) addToCart(Number(add));
-    const inc = e.target.dataset.inc;
-    if (inc) changeQty(Number(inc), 1);
-    const dec = e.target.dataset.dec;
-    if (dec) changeQty(Number(dec), -1);
-    const rm = e.target.dataset.remove;
-    if (rm) removeItem(Number(rm));
-  });
-
-  cartBtn.addEventListener("click", openCart);
-  cartClose.addEventListener("click", closeCart);
-  cartOverlay.addEventListener("click", closeCart);
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && cartDrawer.classList.contains("open")) closeCart();
-  });
-
-  const checkoutBtn = document.getElementById("checkoutBtn");
-  if (checkoutBtn) {
-    checkoutBtn.addEventListener("click", () => {
-      if (cart.length === 0) return;
-      window.location.href = "checkout/";
-    });
-  }
-
-  // render cart state on load, then pull products from Supabase
-  renderCart();
-  loadProducts().then(scrollToHashTarget);
+  loadPieces().then(scrollToHashTarget);
 
   /* ---------- FAQ (loaded from Supabase) ---------- */
   const faqList = document.getElementById("faqList");
@@ -428,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const disclaimerText = {
     renew: "Please note: submitting this form is an enquiry only and does not secure a booking. A final price and timescale will be confirmed once the furniture and work required have been assessed.",
     source: "Submitting this form is a sourcing enquiry and does not guarantee that a suitable piece will be found. I’ll contact you if I find something that matches your requirements before proceeding with any purchase.",
-    purchase: "Please note: this is an enquiry only — the piece stays available until checkout is completed. We’ll confirm availability and next steps by email.",
+    purchase: "Please note: this is an enquiry only — availability and next steps will be confirmed by email. The piece is not reserved until we confirm it with you.",
     other: "Please note: submitting this form is an enquiry only and does not secure a booking. I’ll be in touch to discuss your request."
   };
 
@@ -447,13 +313,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   enquiryType.addEventListener("change", updateEnquiryType);
 
-  // "Enquire about me" links land here via ?enquire=purchase&piece=…
+  // "Enquire about me" links land here via ?enquire=purchase&piece=…&status=…
   const prefill = new URLSearchParams(window.location.search);
   const preType = prefill.get("enquire");
   if (preType && [...enquiryType.options].some((o) => o.value === preType)) {
     enquiryType.value = preType;
     const piece = prefill.get("piece");
+    const status = prefill.get("status");
     if (piece && form.elements.purchasePiece) form.elements.purchasePiece.value = piece;
+    if (status && form.elements.purchaseMessage) {
+      form.elements.purchaseMessage.value = `I'm enquiring about ${piece || "this piece"} — status: ${status}.`;
+    }
   }
   updateEnquiryType();
 
