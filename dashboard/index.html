@@ -248,12 +248,13 @@
 
       <!-- Pieces panel -->
       <div class="dashboard__panel" data-panel="products">
-        <p class="panel-hint">The pieces shown in the catalogue. Every piece needs a status — Ready to Upcycle or Ready to Go — and gets an "Enquire about me" button that opens the contact form. Set a Position number to control the order — lower numbers appear first; pieces left blank show newest-first after positioned ones.</p>
+        <p class="panel-hint">The pieces shown in the catalogue. Every piece needs a status — Ready to Upcycle, Ready to Go, or No status for kits &amp; supplies — and gets an "Enquire about me" button that opens the contact form. Set a Position number to control the order — lower numbers appear first; pieces left blank show newest-first after positioned ones.</p>
         <div class="faq-editor__item" style="max-width: 640px;">
           <label class="editor-field"><span>Piece name</span><input type="text" id="newPieceName" placeholder="e.g. Nest of tables" /></label>
           <div class="editor-field"><span>Status (required)</span>
             <label class="product-item__sold"><input type="radio" name="newPieceStatus" value="upcycle" /> Ready to Upcycle</label>
             <label class="product-item__sold"><input type="radio" name="newPieceStatus" value="go" /> Ready to Go</label>
+            <label class="product-item__sold"><input type="radio" name="newPieceStatus" value="none" /> No status (kits &amp; supplies)</label>
           </div>
           <button class="faq-editor__btn faq-editor__btn--save" id="addProductBtn">Add piece</button>
           <p class="form__note" id="newPieceNote" style="text-align:left; margin-top:8px;"></p>

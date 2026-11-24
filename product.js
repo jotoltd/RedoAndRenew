@@ -32,8 +32,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const hidePreloved = hideSetting && hideSetting.value
     ? hideSetting.value.split(",").includes(String(p.id))
     : false;
-  const status = p.enquire_only ? "Ready to Upcycle" : "Ready to Go";
-  const enquiryHref = `/?enquire=purchase&piece=${encodeURIComponent(p.name)}&status=${encodeURIComponent(status)}#contact`;
+  const rawStatus = p.ready_status || (p.enquire_only ? "upcycle" : "go");
+  const status = rawStatus === "upcycle" ? "Ready to Upcycle" : rawStatus === "go" ? "Ready to Go" : "";
+  const enquiryHref = status
+    ? `/?enquire=purchase&piece=${encodeURIComponent(p.name)}&status=${encodeURIComponent(status)}#contact`
+    : `/?enquire=purchase&piece=${encodeURIComponent(p.name)}#contact`;
 
   document.title = `${p.name} — Redo & Renew`;
 
@@ -53,7 +56,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     <div class="product-page__info">
       <span class="eyebrow">One of a kind</span>
       <h1>${esc(p.name)}</h1>
-      <p class="product-page__price product-page__price--enquire">${status}</p>
+      ${status ? `<p class="product-page__price product-page__price--enquire">${status}</p>` : ""}
       ${p.description ? `<p class="product-page__desc">${esc(p.description)}</p>` : ""}
       ${hidePreloved ? "" : '<p class="product-page__preloved">All pieces are preloved and lovingly upcycled. As with any previously loved furniture, you may notice some minor signs of its past life. These little imperfections are part of the character, charm and authenticity of each unique piece.</p>'}
       <div class="product-page__actions">

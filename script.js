@@ -192,9 +192,15 @@ document.addEventListener("DOMContentLoaded", () => {
   let pieces = [];
   const piecesGrid = document.getElementById("piecesGrid");
 
-  const pieceStatus = (p) => (p.enquire_only ? "Ready to Upcycle" : "Ready to Go");
-  const pieceEnquiryHref = (p) =>
-    `?enquire=purchase&piece=${encodeURIComponent(p.name)}&status=${encodeURIComponent(pieceStatus(p))}#contact`;
+  const pieceStatus = (p) => {
+    const s = p.ready_status || (p.enquire_only ? "upcycle" : "go");
+    return s === "upcycle" ? "Ready to Upcycle" : s === "go" ? "Ready to Go" : "";
+  };
+  const pieceEnquiryHref = (p) => {
+    const status = pieceStatus(p);
+    const base = `?enquire=purchase&piece=${encodeURIComponent(p.name)}`;
+    return status ? `${base}&status=${encodeURIComponent(status)}#contact` : `${base}#contact`;
+  };
 
   const renderPieces = () => {
     if (!piecesGrid) return;
@@ -215,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <p class="product-card__desc">${esc(p.description || "")}</p>
           <a class="product-card__more" href="product/?id=${p.id}" hidden>Read more →</a>
           <div class="product-card__foot">
-            <span class="product-card__price product-card__price--enquire">${status}</span>
+            ${status ? `<span class="product-card__price product-card__price--enquire">${status}</span>` : '<span></span>'}
             <a class="product-card__btn" href="${pieceEnquiryHref(p)}">Enquire about me</a>
           </div>
         </div>

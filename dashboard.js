@@ -200,6 +200,8 @@
     });
   };
 
+  const statusOf = (p) => p.ready_status || (p.enquire_only ? "upcycle" : "go");
+
   const renderProducts = () => {
     if (productItems.length === 0) {
       productsList.innerHTML = '<p class="admin-login__note">No pieces yet — add your first piece above.</p>';
@@ -224,8 +226,9 @@
           <label class="editor-field"><span>Position${productSortable ? "" : " — needs sort_order column"}</span><input type="number" value="${p.sort_order ?? ""}" data-field="sort_order" min="0" step="1" placeholder="—" ${productSortable ? "" : "disabled"} /></label>
         </div>
         <div class="editor-field"><span>Status (required)</span>
-          <label class="product-item__sold"><input type="radio" name="status-${p.id}" data-field="status" value="upcycle" ${p.enquire_only ? "checked" : ""} /> Ready to Upcycle</label>
-          <label class="product-item__sold"><input type="radio" name="status-${p.id}" data-field="status" value="go" ${p.enquire_only ? "" : "checked"} /> Ready to Go</label>
+          <label class="product-item__sold"><input type="radio" name="status-${p.id}" data-field="status" value="upcycle" ${statusOf(p) === "upcycle" ? "checked" : ""} /> Ready to Upcycle</label>
+          <label class="product-item__sold"><input type="radio" name="status-${p.id}" data-field="status" value="go" ${statusOf(p) === "go" ? "checked" : ""} /> Ready to Go</label>
+          <label class="product-item__sold"><input type="radio" name="status-${p.id}" data-field="status" value="none" ${statusOf(p) === "none" ? "checked" : ""} /> No status (kits &amp; supplies)</label>
         </div>
         <label class="product-item__sold"><input type="checkbox" data-field="hide_preloved" ${hidePrelovedIds.has(String(p.id)) ? "checked" : ""} /> Hide the “preloved &amp; lovingly upcycled” note (for kits and supplies)</label>
         <div class="editor-field"><span>Photos (first one is the cover)</span>
@@ -290,7 +293,7 @@
           tag: val("tag") || null,
           images,
           image_url: images[0] || null,
-          enquire_only: status.value === "upcycle"
+          ready_status: status.value
         };
         if (productSortable) updates.sort_order = val("sort_order") === "" ? null : Number(val("sort_order"));
         if (!updates.name) return;
@@ -352,14 +355,14 @@
       return;
     }
     if (!status) {
-      setNewPieceNote("Choose a status — Ready to Upcycle or Ready to Go.", true);
+      setNewPieceNote("Choose a status — Ready to Upcycle, Ready to Go or No status.", true);
       return;
     }
     setNewPieceNote("Adding piece…");
     const nextOrder = productItems.length ? Math.max(...productItems.map((p) => p.sort_order || 0)) + 1 : 1;
     const { error } = await supabase
       .from("products")
-      .insert([{ name, price: 0, enquire_only: status.value === "upcycle", ...(productSortable ? { sort_order: nextOrder } : {}) }]);
+      .insert([{ name, price: 0, ready_status: status.value, ...(productSortable ? { sort_order: nextOrder } : {}) }]);
     if (error) {
       setNewPieceNote("Couldn't add the piece — please try again.", true);
       return;
